@@ -1,0 +1,84 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    tools:context="hobby.app.MainActivity">
+
+    <Button
+        android:id="@+id/addHobby"
+        android:layout_centerHorizontal="true"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="30dp"
+        android:layout_marginBottom="40dp"
+        android:text="Hobbik kezelése"
+        android:onClick="startHobbiesActivtiy"/>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_below="@id/addHobby"
+        android:background="@android:color/black" />
+
+    <TextView
+            android:id="@+id/selectedItems"
+            android:layout_below="@+id/addHobby"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:layout_marginBottom="20dp"/>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_below="@id/selectedItems"
+        android:background="@android:color/black" />
+    <!--
+            <ListView
+                android:id="@+id/hobbyList"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/addHobby"
+                android:dividerHeight="0dp"
+                android:scrollbars="vertical">
+
+
+             </ListView>
+-->
+            <RadioGroup
+                android:id="@+id/timeGroup"
+                android:layout_below="@id/selectedItems"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="30dp"
+                android:layout_marginBottom="30dp"
+                android:orientation="horizontal">
+                <RadioButton
+                    android:id="@+id/haveTime"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Ráérek"/>
+                <RadioButton
+                    android:id="@+id/busy"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="30dp"
+                    android:text="Nincs sok időm"/>
+
+            </RadioGroup>
+
+            <Button
+                android:id="@+id/search"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerHorizontal="true"
+                android:layout_below="@id/timeGroup"
+                android:text="Keresés!"
+                android:onClick="startResultlistActivity"/>
+
+</RelativeLayout>
