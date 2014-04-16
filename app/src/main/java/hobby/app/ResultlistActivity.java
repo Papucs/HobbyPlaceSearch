@@ -116,7 +116,7 @@ public class ResultlistActivity extends Activity {
         List<Place> places= new ArrayList<Place>();
         //https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=-33.8670522,151.1957362&radius=500&types=food&name=harbour&sensor=false&key=AddYourOwnKeyHere
         String uri =
-                "https://maps.googleapis.com/maps/api/place/nearbysearch/xml?location=" + myLocation + "&radius=500&types="+ t +"&sensor=true&key=AIzaSyBx0rWF_XU9agah1JdVQ9q_73RCRKTm6NI";
+                "https://maps.googleapis.com/maps/api/place/nearbysearch/xml?location=" + myLocation + "&radius=5000&types="+ t +"&sensor=true&key=AIzaSyBx0rWF_XU9agah1JdVQ9q_73RCRKTm6NI";
 
         try {
 

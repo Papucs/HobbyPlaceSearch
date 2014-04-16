@@ -47,7 +47,7 @@ public class MapActivity extends FragmentActivity {
 
     private GoogleMap map;
     private ArrayList<Place> selectedPlaces = new ArrayList<Place>();
-    private LatLng currentLocation;
+    private LatLng currentLocation,destination;
     private LocationManager locationManager;
     private String locationProvider;
 
@@ -63,6 +63,7 @@ public class MapActivity extends FragmentActivity {
 
         Intent intent = getIntent();
         selectedPlaces = intent.getParcelableArrayListExtra("checked");
+
         double [] c = intent.getDoubleArrayExtra("latlng");
         currentLocation= new LatLng(c[0],c[1]);
 
@@ -78,6 +79,10 @@ public class MapActivity extends FragmentActivity {
 
         map.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLocation, 12));
 
+        if(selectedPlaces.size()==1){
+            destination=selectedPlaces.get(0).getCoord();
+            new HttpAsyncTask().execute();
+        }
     }
 
 
@@ -113,27 +118,94 @@ public class MapActivity extends FragmentActivity {
         }
         return super.onOptionsItemSelected(item);
     }
-/*
+
+    public List<LatLng> getDirections(LatLng origin, LatLng destination) {
+
+        String orig = origin.latitude + "," + origin.longitude;
+        String dest = destination.latitude + "," + destination.longitude;
+        Document doc = null;
+
+        String uri =
+                "http://maps.google.com/maps/api/directions/xml?origin=" + orig + "&destination=" + dest + "&sensor=false&mode=drive";
+
+        try {
+
+            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+            DocumentBuilder db = dbf.newDocumentBuilder();
+            doc = db.parse(new URL(uri).openStream());
+
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (SAXException e) {
+            e.printStackTrace();
+        } catch (ParserConfigurationException e) {
+            e.printStackTrace();
+        }
+
+        NodeList nList = doc.getElementsByTagName("overview_polyline");
+        Node polyline = nList.item(0);
+        NodeList pList = polyline.getChildNodes();
+
+        String points = pList.item(1).getTextContent();
+
+        return decodePoly(points);
+
+    }
+
+    //code source: http://www.geekyblogger.com/2010/12/decoding-polylines-from-google-maps.html
+    //a két végpont közti útvonal pontjait dekódolja a google directions apija áltla visszaadott vonnalláncból
+    public static List<LatLng> decodePoly(String encoded) {
+        List<LatLng> poly = new ArrayList<LatLng>();
+        int index = 0, len = encoded.length();
+        double lat = 0, lng = 0;
+        while (index < len) {
+            int b, shift = 0, result = 0;
+            do {
+                b = encoded.charAt(index++) - 63;
+                result |= (b & 0x1f) << shift;
+                shift += 5;
+            } while (b >= 0x20);
+            double dlat = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
+            lat += dlat;
+            shift = 0;
+            result = 0;
+            do {
+                b = encoded.charAt(index++) - 63;
+                result |= (b & 0x1f) << shift;
+                shift += 5;
+            } while (b >= 0x20);
+            double dlng = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
+            lng += dlng;
+            LatLng p = new LatLng(((lat / 1E5)),
+                    ((lng / 1E5)));
+            poly.add(p);
+        }
+        return poly;
+    }
+
     private class HttpAsyncTask extends AsyncTask<Void, Void, List<LatLng>> {
         @Override
         protected List<LatLng> doInBackground(Void... params) {
 
-            //return getDirections();
+            return getDirections(currentLocation, destination);
         }
 
         // onPostExecute displays the results of the AsyncTask.
         @Override
         protected void onPostExecute(List<LatLng> result) {
-            //wayPoints.addAll(result);
+            List<LatLng> wayPoints = new ArrayList<LatLng>();
+            wayPoints.addAll(result);
 
             //útvonal kirajzolása
             PolylineOptions lineOptions = new PolylineOptions()
                     .color(Color.MAGENTA)
                     .width(5);
             Polyline line = map.addPolyline(lineOptions);
-            //line.setPoints();
+            line.setPoints(wayPoints);
 
         }
     }
-*/
+
 }
