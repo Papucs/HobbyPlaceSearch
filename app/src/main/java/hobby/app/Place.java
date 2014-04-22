@@ -45,6 +45,10 @@ public class Place implements Parcelable {
         this.coord = new LatLng(lat, lng);
     }
 
+    public String coordToString(){
+        return coord.latitude+","+coord.longitude;
+    }
+
     public String getAddress() {
         return address;
     }

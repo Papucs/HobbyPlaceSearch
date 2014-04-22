@@ -1,6 +1,67 @@
 <?xml version="1.0" encoding="utf-8"?>
-<fragment xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/map"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:name="com.google.android.gms.maps.SupportMapFragment" />
+
+    tools:context=".MapActivity" >
+
+    <fragment xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/map"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:name="com.google.android.gms.maps.SupportMapFragment" />
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:background="#80000000"
+        android:gravity="center_horizontal"
+        >
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            >
+            <Button
+                android:id="@+id/modeDrive"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerHorizontal="true"
+                android:text="Kocsi"
+                android:onClick="onDriveClick"
+                android:background="@drawable/custom_button"
+                android:textAppearance="@style/button_text"
+                android:textColor="@android:color/white"
+                android:typeface="serif"
+                />
+
+            <Button
+                android:id="@+id/modeBike"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerHorizontal="true"
+                android:text="Kerékpár"
+                android:onClick="onBikeClick"
+                android:background="@drawable/custom_button"
+                android:textAppearance="@style/button_text"
+                android:textColor="@android:color/white"
+                android:typeface="serif"
+                android:layout_marginRight="20dp"
+                android:layout_marginLeft="20dp"/>
+
+            <Button
+                android:id="@+id/modeWalking"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerHorizontal="true"
+                android:text="Gyalog"
+                android:onClick="onWalkingClick"
+                android:background="@drawable/custom_button"
+                android:textAppearance="@style/button_text"
+                android:textColor="@android:color/white"
+                android:typeface="serif"/>
+
+        </LinearLayout>
+    </LinearLayout>
+</FrameLayout>

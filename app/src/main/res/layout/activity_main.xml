@@ -14,15 +14,19 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="30dp"
-        android:layout_marginBottom="40dp"
+        android:textAppearance="@style/button_text"
+        android:textColor="@android:color/white"
         android:text="Hobbik kezelése"
-        android:onClick="startHobbiesActivtiy"/>
+        android:onClick="startHobbiesActivtiy"
+        android:background="@drawable/custom_button"
+        android:layout_marginBottom="40dp"
+        android:typeface="serif"/>
 
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:layout_below="@id/addHobby"
-        android:background="@android:color/black" />
+        android:background="@drawable/line"/>
 
     <TextView
             android:id="@+id/selectedItems"
@@ -36,7 +40,7 @@
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:layout_below="@id/selectedItems"
-        android:background="@android:color/black" />
+        android:background="@drawable/line" />
     <!--
             <ListView
                 android:id="@+id/hobbyList"
@@ -79,6 +83,10 @@
                 android:layout_centerHorizontal="true"
                 android:layout_below="@id/timeGroup"
                 android:text="Keresés!"
-                android:onClick="startResultlistActivity"/>
+                android:onClick="startResultlistActivity"
+                android:background="@drawable/custom_button"
+                android:textAppearance="@style/button_text"
+                android:textColor="@android:color/white"
+                android:typeface="serif"/>
 
 </RelativeLayout>
