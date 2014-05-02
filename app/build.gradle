@@ -12,14 +12,23 @@ android {
     }
     buildTypes {
         release {
-            runProguard false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+            runProguard true
+            proguardFile getDefaultProguardFile('proguard-android.txt')
+        }
+    }
+
+    productFlavors {
+        flavor1 {
+        }
+        flavor2 {
+            proguardFile 'some-other-rules.txt'
         }
     }
 }
 
 dependencies {
+    compile 'com.android.support:support-v4:19.+'
     compile 'com.android.support:appcompat-v7:+'
-    compile 'com.google.android.gms:play-services:3.1.36'
+    compile 'com.google.android.gms:play-services:4.3.23'
     compile fileTree(dir: 'libs', include: ['*.jar'])
 }

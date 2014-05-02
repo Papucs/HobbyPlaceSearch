@@ -1,11 +1,10 @@
 package hobby.app;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.app.Activity;
-import android.graphics.Typeface;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
@@ -13,14 +12,10 @@ import android.provider.Settings;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.ListView;
+import android.widget.RadioGroup;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import java.util.ArrayList;
-import java.util.Hashtable;
 
 
 public class MainActivity extends Activity {
@@ -28,6 +23,7 @@ public class MainActivity extends Activity {
     private ArrayList<String> selected = new ArrayList<String>();
     private TextView si ;
     private final Activity thisActivtiy = this;
+    private boolean frequentlyVisited = false;
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
@@ -75,7 +71,22 @@ public class MainActivity extends Activity {
     }
 
     public void startHobbiesActivtiy(View v){
+        RadioGroup radioG = (RadioGroup) findViewById(R.id.radiusGroup);
+        radioG.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(RadioGroup group, int checkedId){
+                switch(checkedId){
+                    case R.id.radio1:
+                        frequentlyVisited =  true;
+                        break;
+                    case R.id.radio2:
+                        frequentlyVisited = false;
+                        break;
+                }
+            }
+        });
         Intent intent = new Intent(getApplicationContext(),HobbiesActivity.class);
+        intent.putExtra("frequency", frequentlyVisited);
         startActivityForResult(intent, 10);
         //startActivity(intent);
     }

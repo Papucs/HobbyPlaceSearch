@@ -1,6 +1,5 @@
 package hobby.app;
 
-import android.location.Address;
 import android.os.Parcel;
 import android.os.Parcelable;
 
@@ -14,7 +13,9 @@ public class Place implements Parcelable {
     private LatLng coord;
     private String address;
     private String name;
-    private double distance;
+    private Double distance=0.0;
+    private Double rating;
+    private String frequency;
 
     public static final Parcelable.Creator<Place> CREATOR = new Parcelable.Creator<Place>() {
         public Place createFromParcel(Parcel in) {
@@ -35,6 +36,8 @@ public class Place implements Parcelable {
         address = p.readString();
         name=p.readString();
         distance=p.readDouble();
+        rating=p.readDouble();
+        frequency=p.readString();
     }
 
     public LatLng getCoord() {
@@ -65,12 +68,29 @@ public class Place implements Parcelable {
         this.name = name;
     }
 
-    public double getDistance() {
+
+    public Double getDistance() {
         return distance;
     }
 
-    public void setDistance(double distance) {
+    public void setDistance(Double distance) {
         this.distance = distance;
+    }
+
+    public Double getRating() {
+        return rating;
+    }
+
+    public void setRating(Double rrating) {
+        this.rating = rrating;
+    }
+
+    public String getFrequency() {
+        return frequency;
+    }
+
+    public void setFrequency(String frequency) {
+        this.frequency = frequency;
     }
 
     @Override
@@ -85,5 +105,7 @@ public class Place implements Parcelable {
         dest.writeString(address);
         dest.writeString(name);
         dest.writeDouble(distance);
+        dest.writeDouble(rating);
+        dest.writeString(frequency);
     }
 }

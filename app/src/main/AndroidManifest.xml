@@ -37,23 +37,34 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
         <activity
             android:name="hobby.app.HobbiesActivity"
             android:label="@string/title_activity_hobbies" >
         </activity>
+
         <activity
             android:name="hobby.app.MapActivity"
             android:label="@string/title_activity_map" >
+
         </activity>
+
         <activity
-            android:name=".ResultlistActivity"
+            android:name="hobby.app.ResultlistActivity"
             android:label="@string/title_activity_resultlist" >
         </activity>
 
         <meta-data
             android:name="com.google.android.maps.v2.API_KEY"
-            android:value="AIzaSyBY3jvadxMgMelfzz5zAzgYCR2Aj_GILmY" />
+            android:value="AIzaSyDp3PkBXQqU8nGCuJauwvqwDl0ntL70X8U" />
+
+        <meta-data
+            android:name="com.google.android.gms.version"
+            android:value="@integer/google_play_services_version" />
+
 
     </application>
 
 </manifest>
+
+

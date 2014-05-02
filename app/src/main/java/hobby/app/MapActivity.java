@@ -1,23 +1,22 @@
 package hobby.app;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
-import android.location.LocationManager;
 import android.os.AsyncTask;
-import android.provider.Settings;
-import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+import android.support.v4.app.FragmentActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
@@ -31,6 +30,8 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,9 +41,17 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
 class DMElement{
-    public float duration;
-    public float distance;
+    public double duration;
+    public double distance;
     public List<LatLng> wayPoints = new ArrayList<LatLng>();
+}
+
+
+class CustomComparator implements Comparator<Place> {
+    @Override
+    public int compare(Place a, Place b){
+        return a.getDistance().compareTo(b.getDistance());
+    }
 }
 
 public class MapActivity extends FragmentActivity {
@@ -50,14 +59,13 @@ public class MapActivity extends FragmentActivity {
     private GoogleMap map;
     private ArrayList<Place> selectedPlaces = new ArrayList<Place>();
     private LatLng currentLocation,destination;
-    private LocationManager locationManager;
-    private String locationProvider;
     private Map<Integer,String> points = new HashMap<Integer,String>();
     private final String API_KEY = "AIzaSyBx0rWF_XU9agah1JdVQ9q_73RCRKTm6NI";
     private DMElement[][]distanceMatrix;
     private Polyline line;
     private boolean modeNotAvailable=false;
-    private String mode;
+    private AlertDialog alert;
+    private List<String> writtenDirections = new ArrayList<String>();
 
 
     @Override
@@ -68,10 +76,10 @@ public class MapActivity extends FragmentActivity {
         map = ((SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map)).getMap();
 
-        Intent intent = getIntent();
-        selectedPlaces = intent.getParcelableArrayListExtra("checked");
+        Bundle bundle = getIntent().getExtras();
+        selectedPlaces=bundle.getParcelableArrayList("checked");
 
-        double [] c = intent.getDoubleArrayExtra("latlng");
+        double [] c = bundle.getDoubleArray("latlng");
         currentLocation= new LatLng(c[0],c[1]);
 
         map.addMarker(new MarkerOptions()
@@ -79,16 +87,36 @@ public class MapActivity extends FragmentActivity {
                     .position(currentLocation));
 
 
-
         map.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLocation, 12));
-        drawSpots();
-        /*
-        if(selectedPlaces.size()==1){
-            destination=selectedPlaces.get(0).getCoord();
-            new SingleDestinationAsyncTask().execute();
-        }else{
-            new MultipleDestinationsAsyncTask().execute();
-        }*/
+
+        //LatLngBounds llb = new LatLngBounds(currentLocation,selectedPlaces.get(selectedPlaces.size()-1).getCoord());
+        //map.moveCamera(CameraUpdateFactory.newLatLngBounds(llb,10));
+    }
+
+    public void makeAlert(){
+        AlertDialog.Builder  builder = new AlertDialog.Builder(MapActivity.this);
+        builder.setTitle("Mód nem elérhető");
+        builder.setMessage("A térségben az általad választott mód nem elérhető, kérlek válassz másiakt! ");
+        builder.setCancelable(true);
+        builder.setNegativeButton("Mégse",
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                         dialog.cancel();
+
+                    }
+                }
+        );
+        builder.setPositiveButton("Ok",
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        //dialog.cancel();
+                        finish();
+                        startActivity(getIntent());
+                    }
+                }
+        );
+
+        alert = builder.create();
     }
 
     public void drawSpots(){
@@ -101,29 +129,27 @@ public class MapActivity extends FragmentActivity {
     }
 
     public void onDriveClick(View v){
-        mode = "drive";
+
         if(selectedPlaces.size()==1){
             destination=selectedPlaces.get(0).getCoord();
-            new SingleDestinationAsyncTask().execute(this);
+            new SingleDestinationAsyncTask().execute("drive");
         }else{
             new MultipleDestinationsAsyncTask().execute("drive");
         }
     }
     public void onBikeClick(View v){
-        mode="bicycling";
         if(selectedPlaces.size()==1){
             destination=selectedPlaces.get(0).getCoord();
-            new SingleDestinationAsyncTask().execute(this);
+            new SingleDestinationAsyncTask().execute("bicycling");
         }else{
             new MultipleDestinationsAsyncTask().execute("drive");
         }
     }
 
     public void onWalkingClick(View v) {
-        mode="walking";
         if (selectedPlaces.size() == 1) {
             destination = selectedPlaces.get(0).getCoord();
-            new SingleDestinationAsyncTask().execute(this);
+            new SingleDestinationAsyncTask().execute("walking");
         } else {
             new MultipleDestinationsAsyncTask().execute("drive");
         }
@@ -131,7 +157,7 @@ public class MapActivity extends FragmentActivity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        
+
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.map, menu);
         return true;
@@ -150,9 +176,9 @@ public class MapActivity extends FragmentActivity {
     }
 
 
-    public DMElement[][] getDistances()throws ModeNotAvailableException{
+    public DMElement[][] getDistances(){
 
-        //List<Route> routes = new ArrayList<Route>();
+
         points.put(0,"current");
         for(int i=0; i<selectedPlaces.size();++i){
             points.put(i+1,selectedPlaces.get(i).getName());
@@ -164,10 +190,7 @@ public class MapActivity extends FragmentActivity {
         for(int i=0; i<selectedPlaces.size();++i){
             coordinates=coordinates+"|"+selectedPlaces.get(i).coordToString();
         }
-        //coordinates=coordinates+"|"+selectedPlaces.get(selectedPlaces.size()-1);
 
-
-        //http://maps.googleapis.com/maps/api/distancematrix/xml?origins=Vancouver+BC|Seattle&destinations=San+Francisco|Vancouver+BC&mode=bicycling&language=fr-FR&sensor=false&key=API_KEY
         String uri="http://maps.googleapis.com/maps/api/distancematrix/xml?origins="+coordinates+"&destinations="+coordinates+"&sensor=false";
 
         try {
@@ -196,96 +219,62 @@ public class MapActivity extends FragmentActivity {
                 if(rowContent.item(j).getNodeName().equals("element")){
                     Node e = rowContent.item(j);
                     DMElement dme=new DMElement();
-                    dme.duration=Float.parseFloat(e.getChildNodes().item(3).getChildNodes().item(1).getTextContent())/3600;
-                    dme.distance=Float.parseFloat(e.getChildNodes().item(5).getChildNodes().item(1).getTextContent())/1000;
+                    dme.duration=Double.parseDouble(e.getChildNodes().item(3).getChildNodes().item(1).getTextContent())/3600;
+                    dme.distance=Double.parseDouble(e.getChildNodes().item(5).getChildNodes().item(1).getTextContent())/1000;
                     dm[i][x]=dme;
                     ++x;
                 }
             }
         }
 
-        List<Place> all = new ArrayList<Place>();
-        Place curr = new Place();
-        curr.setName("cuurent location");
-        curr.setCoord(currentLocation.latitude, currentLocation.longitude);
-        all.add(curr);
-        all.addAll(selectedPlaces);
-        for(int i=0;i<all.size();++i){
-            for(int j=0; j<all.size();++j){
-                Place a = all.get(i);
-                Place b = all.get(j);
-                     dm[i][j].wayPoints=getDirections(a.getCoord(),b.getCoord(), "drive");
+        NodeList wd = doc.getElementsByTagName("html_instructions");
+        for(int i=0;i<wd.getLength();++i){
+            writtenDirections.add(wd.item(i).getTextContent());
+            Toast.makeText(getApplicationContext(),writtenDirections.get(i), Toast.LENGTH_LONG).show();
+        }
 
-            }
-        }        return dm;
+        List<Place> all = new ArrayList<Place>();
+        return dm;
     }
 
     public void sortPlaces(){
 
         List<Place> sorted= new ArrayList<Place>();
-        for(int i=0; i<selectedPlaces.size();++i){
+        sorted.addAll(selectedPlaces);
 
-            selectedPlaces.get(i).setDistance(distanceMatrix[0][i].distance);
-
+        for(Place p : selectedPlaces){
+            p.setDistance(distanceMatrix[0][selectedPlaces.indexOf(p)+1].distance);
         }
 
-        QuickSort(selectedPlaces, 0, selectedPlaces.size()-1);
+        Collections.sort(selectedPlaces, new CustomComparator());
+        for(int g = 0; g<selectedPlaces.size();++g){
 
-    }
+            String s = selectedPlaces.get(g).getName()+": "+ selectedPlaces.get(g).getDistance();
+            sorted.add(selectedPlaces.get(g));
 
-    public void QuickSort(List<Place> p, int first, int last){
-        if(first<last){
-            int k = moveToPlace(p,first, last);
-
-            QuickSort(p, first, k - 1);
-            QuickSort(p,k+1, last);
         }
-
-
     }
 
-    public int moveToPlace(List<Place> p,int u, int v){
 
 
-        int i=u+1, j=v;
-
-        while(i<=j){
-            while(i<=v && p.get(i).getDistance()<=p.get(u).getDistance()){
-                ++i;
-            }
-            while(u+1<=j && p.get(u).getDistance()<= p.get(j).getDistance()){
-                --j;
-            }
-            if(i<j){
-                change(i, j);
-                ++i;
-                --j;
-            }
-        }
-
-        change(u,i-1);
-
-        return i-1;
-
-    }
-
-    public void change(int a, int b){
-        Place x = selectedPlaces.get(a);
-        Place y = selectedPlaces.get(b);
-
-        selectedPlaces.set(a,y);
-        selectedPlaces.set(b,x);
-    }
-
-    public List<LatLng> getDirections(LatLng origin, LatLng destination, String mode) {
+    public List<LatLng> getDirections(LatLng origin, LatLng destination, String mode ) {
 
         String orig = origin.latitude + "," + origin.longitude;
         String dest = destination.latitude + "," + destination.longitude;
         Document doc = null;
+        String uri;
+        if(selectedPlaces.size()==1) {
+            uri =
+                    "http://maps.google.com/maps/api/directions/xml?origin=" + orig + "&destination=" + dest + "&sensor=false&mode=" + mode;
+        }else{
+            String wp = selectedPlaces.get(0).coordToString();
+            for(int i=1; i<selectedPlaces.size()-1;++i){
+                wp=wp+"|"+selectedPlaces.get(i).coordToString();
+            }
 
-        String uri =
-                "http://maps.google.com/maps/api/directions/xml?origin=" + orig + "&destination=" + dest + "&sensor=false&mode="+mode;
-
+            uri =
+                    "http://maps.google.com/maps/api/directions/xml?origin=" + orig + "&destination=" + dest + "&waypoints="+wp+"&sensor=false&mode=" + mode;
+        }
         try {
 
             DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
@@ -311,7 +300,7 @@ public class MapActivity extends FragmentActivity {
             }
         }catch(ModeNotAvailableException e){
             modeNotAvailable=true;
-            return null;
+            return new ArrayList<LatLng>();
         }
 
             NodeList pList = polyline.getChildNodes();
@@ -353,108 +342,85 @@ public class MapActivity extends FragmentActivity {
         return poly;
     }
 
-    private class SingleDestinationAsyncTask extends AsyncTask<Activity, Void, List<LatLng>> {
-        private Activity thisAct;
+    private class SingleDestinationAsyncTask extends AsyncTask<String, Void, List<LatLng>> {
+
         @Override
         protected void onPreExecute() {
 
         }
 
         @Override
-        protected List<LatLng> doInBackground(Activity... params) {
+        protected List<LatLng> doInBackground(String... params) {
             List<LatLng> result = new ArrayList<LatLng>();
+            result = getDirections(currentLocation, destination, params[0]);
 
-            result = getDirections(currentLocation, destination, mode);
-            thisAct=params[0];
             return result;
+
         }
 
         // onPostExecute displays the results of the AsyncTask.
         @Override
         protected void onPostExecute(List<LatLng> result) {
-            if (modeNotAvailable) {
-                //dafuq, rá kéne jönni
-                AlertDialog.Builder builder = new AlertDialog.Builder(MapActivity.this);
-                builder.setTitle("Mód nem elérhető");
-                builder.setMessage("A térségben az általad választott mód nem elérhető, kérlek válassz másiakt! ");
-                //.setCancelable(true)
-                builder.setNegativeButton("Mégse",null
-                        /*new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int id) {
-                                // dialog.cancel();
+            if(modeNotAvailable){
+                makeAlert();
 
-                            }
-                        }*/
-                );
-                builder.setPositiveButton("Ok",null
-                        /*new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int id) {
-                                //dialog.cancel();
-                                finish();
-                                startActivity(getIntent());
-                            }
-                        }*/
-                );
-
-                final AlertDialog alert = builder.create();
-               thisAct.runOnUiThread(new java.lang.Runnable() {
+                MapActivity.this.runOnUiThread(new java.lang.Runnable() {
                     public void run() {
                         //show AlertDialog
                         alert.show();
                     }
                 });
+            }else {
+                drawSpots();
+                //útvonal kirajzolása
+                PolylineOptions lineOptions = new PolylineOptions()
+                        .color(Color.MAGENTA)
+                        .width(5);
+                line = map.addPolyline(lineOptions);
+                line.setPoints(result);
             }
-            List<LatLng> wayPoints = new ArrayList<LatLng>();
-            wayPoints.addAll(result);
-            //drawSpots();
-            //útvonal kirajzolása
-
-            if(!line.getPoints().equals(null)){
-                line.remove();
-            }
-            PolylineOptions lineOptions = new PolylineOptions()
-                    .color(Color.MAGENTA)
-                    .width(5);
-            line = map.addPolyline(lineOptions);
-            line.setPoints(wayPoints);
 
         }
+
     }
 
-    private class MultipleDestinationsAsyncTask extends AsyncTask<String,Void, DMElement[][]>{
+    private class MultipleDestinationsAsyncTask extends AsyncTask<String,Void, List<LatLng>>{
+
+
         @Override
         protected void onPreExecute(){
 
         }
 
         @Override
-        protected DMElement[][] doInBackground(String... params){
-           DMElement[][] result = new DMElement[points.size()][points.size()];
-            try{
-                result = getDistances();
-            }catch(ModeNotAvailableException e){
+        protected List<LatLng> doInBackground(String... params){
 
-            }
-            return result;
+            distanceMatrix = getDistances();
+            sortPlaces();
+            return getDirections(currentLocation, selectedPlaces.get(selectedPlaces.size()-1).getCoord(),params[0]);
 
         }
 
         @Override
-        protected void onPostExecute(DMElement[][] result){
-            distanceMatrix=result;
-            List<LatLng> graph = new ArrayList<LatLng>();
-           /// sortPlaces();
-            //drawSpots();
-            /*
-            graph=getDirections(currentLocation, selectedPlaces.get(0).getCoord());
-            PolylineOptions lineOp = new PolylineOptions()
-                    .color(Color.BLUE)
-                    .width(5);
-            Polyline l = map.addPolyline(lineOp);
-            l.setPoints(graph);*/
+        protected void onPostExecute(List<LatLng> result){
 
+            if(modeNotAvailable){
+                makeAlert();
 
-
+                MapActivity.this.runOnUiThread(new java.lang.Runnable() {
+                    public void run() {
+                        //show AlertDialog
+                        alert.show();
+                    }
+                });
+            }else {
+                drawSpots();
+                PolylineOptions lineOptions = new PolylineOptions()
+                        .color(Color.MAGENTA)
+                        .width(5);
+                line = map.addPolyline(lineOptions);
+                line.setPoints(result);
+            }
         }
 
 

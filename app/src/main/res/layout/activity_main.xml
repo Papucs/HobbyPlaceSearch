@@ -41,38 +41,31 @@
         android:layout_height="1dp"
         android:layout_below="@id/selectedItems"
         android:background="@drawable/line" />
-    <!--
-            <ListView
-                android:id="@+id/hobbyList"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_below="@id/addHobby"
-                android:dividerHeight="0dp"
-                android:scrollbars="vertical">
 
-
-             </ListView>
--->
             <RadioGroup
-                android:id="@+id/timeGroup"
+                android:id="@+id/radiusGroup"
                 android:layout_below="@id/selectedItems"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerHorizontal="true"
                 android:layout_marginTop="30dp"
                 android:layout_marginBottom="30dp"
-                android:orientation="horizontal">
+                android:gravity="left">
+
                 <RadioButton
-                    android:id="@+id/haveTime"
+                    android:id="@+id/radio1"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Ráérek"/>
+                    android:text="Gyakrabban látogatnám"
+                   />
+
                 <RadioButton
-                    android:id="@+id/busy"
+                    android:id="@+id/radio2"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginLeft="30dp"
-                    android:text="Nincs sok időm"/>
+                    android:text="Csak most mennék el"
+                    android:layout_gravity="left"/>
 
             </RadioGroup>
 
@@ -81,7 +74,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerHorizontal="true"
-                android:layout_below="@id/timeGroup"
+                android:layout_below="@id/radiusGroup"
                 android:text="Keresés!"
                 android:onClick="startResultlistActivity"
                 android:background="@drawable/custom_button"

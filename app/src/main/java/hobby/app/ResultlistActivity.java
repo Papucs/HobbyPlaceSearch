@@ -1,6 +1,7 @@
 package hobby.app;
 
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.location.Location;
@@ -8,19 +9,16 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
 import android.util.SparseBooleanArray;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.Window;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
-import android.widget.SimpleAdapter;
-import android.widget.Toast;
-
-import com.google.android.gms.maps.model.LatLng;
 
 import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
@@ -29,6 +27,8 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,6 +37,12 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
+class RateComparator implements Comparator<Place> {
+    @Override
+    public int compare(Place a, Place b){
+        return a.getRating().compareTo(b.getRating());
+    }
+}
 
 public class ResultlistActivity extends Activity {
 
@@ -48,6 +54,8 @@ public class ResultlistActivity extends Activity {
     private String myLocation;
     private Location currentLocation;
     private final String API_KEY = "AIzaSyBx0rWF_XU9agah1JdVQ9q_73RCRKTm6NI";
+    private boolean frequentlyVisited;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,6 +63,7 @@ public class ResultlistActivity extends Activity {
         setContentView(R.layout.activity_resultlist);
         Intent intent = getIntent();
         types=intent.getStringArrayListExtra("selectedTypes");
+        frequentlyVisited=intent.getBooleanExtra("frequency", false);
 
         LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
 
@@ -109,15 +118,21 @@ public class ResultlistActivity extends Activity {
 
         //String myLocation = getMyLocation();
         String t = types.get(0);
+        String radius="";
         for(int i=1; i<types.size();++i){
             t=t+"|"+types.get(i);
         }
         Document doc = null;
 
         List<Place> places= new ArrayList<Place>();
+        if(frequentlyVisited){
+            radius="4000";
+        }else{
+            radius="10000";
+        }
         //https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=-33.8670522,151.1957362&radius=500&types=food&name=harbour&sensor=false&key=AddYourOwnKeyHere
         String uri =
-                "https://maps.googleapis.com/maps/api/place/nearbysearch/xml?location=" + myLocation + "&radius=5000&types="+ t +"&sensor=true&key="+API_KEY;
+                "https://maps.googleapis.com/maps/api/place/nearbysearch/xml?location=" + myLocation + "&radius="+radius+"&types="+ t +"&sensor=true&key="+API_KEY;
 
         try {
 
@@ -156,11 +171,15 @@ public class ResultlistActivity extends Activity {
                     double lat = Double.parseDouble(coords.item(1).getTextContent());
                     double lng = Double.parseDouble(coords.item(3).getTextContent());
                     p.setCoord(lat, lng);
+                }else if(str.equals("rating")) {
+                    p.setRating(Double.parseDouble(attribs.item(j).getTextContent()));
                 }
             }
             places.add(p);
         }
+        Collections.sort(places, new CustomComparator());
         return places;
+
 
     }
 
@@ -179,18 +198,24 @@ public class ResultlistActivity extends Activity {
 
             }
         }
-        Intent intent  = new Intent(getApplicationContext(),MapActivity.class);
-        intent.putParcelableArrayListExtra("checked", checked);
+
+        Intent intent  = new Intent(ResultlistActivity.this,MapActivity.class);
+        Bundle bundle = new Bundle();
+        bundle.putParcelableArrayList("checked", checked);
         double[] x =new double[]{currentLocation.getLatitude(), currentLocation.getLongitude()};
-        intent.putExtra("latlng",x );
-       // resultIntent.putStringArrayListExtra("CheckedItems", checked);
-       // setResult(Activity.RESULT_OK, resultIntent);
-       // finish();
+        bundle.putDoubleArray("latlng",x );
+        intent.putExtras(bundle);
         startActivity(intent);
-        //Toast.makeText(this,"Selected Items- " + s,Toast.LENGTH_SHORT).show();
+
     }
 
+
     private class getPlacesAsyncTask extends AsyncTask<Void, Void, List<Place>> {
+        private ProgressDialog pdia;
+        @Override
+        protected void onPreExecute(){
+
+        }
 
         @Override
         protected List<Place> doInBackground(Void... params) {
@@ -200,27 +225,48 @@ public class ResultlistActivity extends Activity {
         @Override
         protected void onPostExecute(List<Place> result){
             resultPlaces.addAll(result);
-
+           // ArrayList<Item> items = new ArrayList<Item>();
 
             for (int i=0; i<resultPlaces.size();++i){
                 Map<String, String> m = new HashMap<String, String>();
                 m.put("FirstLine", resultPlaces.get(i).getName());
                 m.put("SecondLine",resultPlaces.get(i).getAddress());
                 results.add(m);
+                //Place p = resultPlaces.get(i);
+                //items.add(new Item(p.getName(), p.getAddress(), p.getRating().toString()));
             }
 
 
             for(int j=0; j<resultPlaces.size();++j){
                 res.add(resultPlaces.get(j).getName());
             }
+
             listView = (ListView)findViewById(R.id.resultList);
+
+
 
             final ArrayAdapter adapter = new ArrayAdapter(getBaseContext(),
                     android.R.layout.simple_list_item_multiple_choice,res);
+
             /*
-            SimpleAdapter adapter = new SimpleAdapter(getBaseContext(), results,R.layout.two_line_checkable_list_item,
-                    new String[]{"FirstLine","SecondLine"},
-                    new int[]{R.id.text1, R.id.text2});*/
+            ArrayAdapter<MyObject> adapter = new ArrayAdapter<MyObject>(this, android.R.layout.simple_list_item_2, android.R.id.text1, result) {
+    @Override
+    public View getView(int position, View convertView, ViewGroup parent) {
+        View view = super.getView(position, convertView, parent);
+        TextView text1 = (TextView) view.findViewById(android.R.id.text1);
+        TextView text2 = (TextView) view.findViewById(android.R.id.text2);
+
+        text1.setText(result.get(position).OperatingSystem);
+        text2.setText(result.get(position).Platform);
+        return view;
+    }
+};
+             */
+            /*
+            MyAdapter adapter = new MyAdapter(getBaseContext(), items);*/
+
+
+
             listView.setAdapter(adapter);
 
         }

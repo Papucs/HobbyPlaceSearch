@@ -1,9 +1,5 @@
 package hobby.app;
 
-import com.google.android.gms.maps.model.LatLng;
-
-import java.util.List;
-
 /**
  * Created by Papucs on 2014.04.20..
  */

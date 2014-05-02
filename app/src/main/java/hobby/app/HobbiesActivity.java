@@ -1,8 +1,7 @@
 package hobby.app;
 
-import android.app.ListActivity;
-import android.content.Intent;
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.SparseBooleanArray;
 import android.view.Menu;
@@ -13,7 +12,6 @@ import android.widget.ListView;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 
@@ -29,6 +27,7 @@ public class HobbiesActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_hobbies);
         Intent intent = getIntent();
+
 
        listView = (ListView)findViewById(R.id.hobbyList);
 

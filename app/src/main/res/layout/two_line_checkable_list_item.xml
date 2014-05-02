@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
-    android:layout_width="match_parent"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
     android:layout_height="match_parent">
 
     <CheckedTextView
         android:id="@+id/text1"
-        android:textSize="17sp"
+        android:textSize="20sp"
         android:textStyle="bold"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:focusable="true"
         android:clickable="true"
+        android:text="main"
         android:checkMark="?android:attr/listChoiceIndicatorMultiple"
         android:paddingLeft="?android:attr/listPreferredItemPaddingLeft"
         android:paddingRight="?android:attr/listPreferredItemPaddingRight"/>
@@ -20,10 +20,22 @@
 
     <TextView
         android:id="@+id/text2"
-        android:textSize="16sp"
+        android:textSize="12sp"
+        android:layout_below="@+id/text1"
+        android:text="first row"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:paddingLeft="?android:attr/listPreferredItemPaddingLeft"
         android:paddingRight="?android:attr/listPreferredItemPaddingRight"/>
 
-</LinearLayout>
+    <TextView
+        android:id="@+id/text3"
+        android:textSize="12sp"
+        android:layout_below="@+id/text2"
+        android:text="first row"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingLeft="?android:attr/listPreferredItemPaddingLeft"
+        android:paddingRight="?android:attr/listPreferredItemPaddingRight"/>
+
+</RelativeLayout>
