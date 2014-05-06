@@ -30,5 +30,6 @@ dependencies {
     compile 'com.android.support:support-v4:19.+'
     compile 'com.android.support:appcompat-v7:+'
     compile 'com.google.android.gms:play-services:4.3.23'
+    compile 'com.android.support:support-v13:19.+'
     compile fileTree(dir: 'libs', include: ['*.jar'])
 }

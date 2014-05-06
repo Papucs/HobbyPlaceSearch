@@ -14,8 +14,7 @@ public class Place implements Parcelable {
     private String address;
     private String name;
     private Double distance=0.0;
-    private Double rating;
-    private String frequency;
+    private Double rating=0.0;
 
     public static final Parcelable.Creator<Place> CREATOR = new Parcelable.Creator<Place>() {
         public Place createFromParcel(Parcel in) {
@@ -37,7 +36,6 @@ public class Place implements Parcelable {
         name=p.readString();
         distance=p.readDouble();
         rating=p.readDouble();
-        frequency=p.readString();
     }
 
     public LatLng getCoord() {
@@ -81,17 +79,10 @@ public class Place implements Parcelable {
         return rating;
     }
 
-    public void setRating(Double rrating) {
-        this.rating = rrating;
+    public void setRating(Double rating) {
+        this.rating = rating;
     }
 
-    public String getFrequency() {
-        return frequency;
-    }
-
-    public void setFrequency(String frequency) {
-        this.frequency = frequency;
-    }
 
     @Override
     public int describeContents() {
@@ -106,6 +97,5 @@ public class Place implements Parcelable {
         dest.writeString(name);
         dest.writeDouble(distance);
         dest.writeDouble(rating);
-        dest.writeString(frequency);
     }
 }

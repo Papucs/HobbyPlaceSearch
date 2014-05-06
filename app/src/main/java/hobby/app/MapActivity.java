@@ -1,15 +1,23 @@
 package hobby.app;
 
+import android.app.ActionBar;
 import android.app.AlertDialog;
+import android.app.FragmentTransaction;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.view.ViewPager;
+import android.text.Html;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ImageButton;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -35,6 +43,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Vector;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -54,7 +63,7 @@ class CustomComparator implements Comparator<Place> {
     }
 }
 
-public class MapActivity extends FragmentActivity {
+public class MapActivity extends FragmentActivity{
 
     private GoogleMap map;
     private ArrayList<Place> selectedPlaces = new ArrayList<Place>();
@@ -65,16 +74,29 @@ public class MapActivity extends FragmentActivity {
     private Polyline line;
     private boolean modeNotAvailable=false;
     private AlertDialog alert;
-    private List<String> writtenDirections = new ArrayList<String>();
+    private ArrayList<CharSequence> writtenDirections = new ArrayList<CharSequence>();
+
+    private void showActionBar() {
+        LayoutInflater inflator = (LayoutInflater) this
+                .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        View v = inflator.inflate(R.layout.map_ab, null);
+        ActionBar actionBar = getActionBar();
+        actionBar.setDisplayHomeAsUpEnabled(true);
+        actionBar.setDisplayShowHomeEnabled (false);
+        actionBar.setDisplayShowCustomEnabled(true);
+        actionBar.setDisplayShowTitleEnabled(false);
+        actionBar.setCustomView(v);
+    }
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_map);
+        showActionBar();
 
         map = ((SupportMapFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.map)).getMap();
+             .findFragmentById(R.id.map)).getMap();
 
         Bundle bundle = getIntent().getExtras();
         selectedPlaces=bundle.getParcelableArrayList("checked");
@@ -82,10 +104,10 @@ public class MapActivity extends FragmentActivity {
         double [] c = bundle.getDoubleArray("latlng");
         currentLocation= new LatLng(c[0],c[1]);
 
-        map.addMarker(new MarkerOptions()
-                    .title("Itt vagyok!")
-                    .position(currentLocation));
 
+        map.addMarker(new MarkerOptions()
+                .title("Itt vagyok!")
+                .position(currentLocation));
 
         map.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLocation, 12));
 
@@ -98,20 +120,20 @@ public class MapActivity extends FragmentActivity {
         builder.setTitle("Mód nem elérhető");
         builder.setMessage("A térségben az általad választott mód nem elérhető, kérlek válassz másiakt! ");
         builder.setCancelable(true);
-        builder.setNegativeButton("Mégse",
+       /* builder.setNegativeButton("Mégse",
                 new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
                          dialog.cancel();
 
                     }
                 }
-        );
+        );*/
         builder.setPositiveButton("Ok",
                 new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
                         //dialog.cancel();
                         finish();
-                        startActivity(getIntent());
+                        //startActivity(getIntent());
                     }
                 }
         );
@@ -126,6 +148,15 @@ public class MapActivity extends FragmentActivity {
                     .position(selectedPlaces.get(i).getCoord()));
         }
 
+    }
+
+    public void listDirections(View v){
+        Intent intent  = new Intent(MapActivity.this,Directions.class);
+        Bundle bundle = new Bundle();
+        bundle.putCharSequenceArrayList("directionsList", writtenDirections);
+       // bundle.putStringArrayList("directionsList", writtenDirections);
+        intent.putExtras(bundle);
+        startActivity(intent);
     }
 
     public void onDriveClick(View v){
@@ -155,12 +186,8 @@ public class MapActivity extends FragmentActivity {
         }
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.map, menu);
-        return true;
+    public void back(View v){
+        onBackPressed();
     }
 
     @Override
@@ -174,7 +201,6 @@ public class MapActivity extends FragmentActivity {
         }
         return super.onOptionsItemSelected(item);
     }
-
 
     public DMElement[][] getDistances(){
 
@@ -227,12 +253,6 @@ public class MapActivity extends FragmentActivity {
             }
         }
 
-        NodeList wd = doc.getElementsByTagName("html_instructions");
-        for(int i=0;i<wd.getLength();++i){
-            writtenDirections.add(wd.item(i).getTextContent());
-            Toast.makeText(getApplicationContext(),writtenDirections.get(i), Toast.LENGTH_LONG).show();
-        }
-
         List<Place> all = new ArrayList<Place>();
         return dm;
     }
@@ -247,12 +267,6 @@ public class MapActivity extends FragmentActivity {
         }
 
         Collections.sort(selectedPlaces, new CustomComparator());
-        for(int g = 0; g<selectedPlaces.size();++g){
-
-            String s = selectedPlaces.get(g).getName()+": "+ selectedPlaces.get(g).getDistance();
-            sorted.add(selectedPlaces.get(g));
-
-        }
     }
 
 
@@ -265,7 +279,7 @@ public class MapActivity extends FragmentActivity {
         String uri;
         if(selectedPlaces.size()==1) {
             uri =
-                    "http://maps.google.com/maps/api/directions/xml?origin=" + orig + "&destination=" + dest + "&sensor=false&mode=" + mode;
+                    "http://maps.google.com/maps/api/directions/xml?origin=" + orig + "&destination=" + dest + "&language=HUNGARIAN&region=HU&sensor=false&mode=" + mode;
         }else{
             String wp = selectedPlaces.get(0).coordToString();
             for(int i=1; i<selectedPlaces.size()-1;++i){
@@ -273,7 +287,7 @@ public class MapActivity extends FragmentActivity {
             }
 
             uri =
-                    "http://maps.google.com/maps/api/directions/xml?origin=" + orig + "&destination=" + dest + "&waypoints="+wp+"&sensor=false&mode=" + mode;
+                    "http://maps.google.com/maps/api/directions/xml?origin=" + orig + "&destination=" + dest + "&waypoints="+wp+"&language=HUNGARIAN&region=HU&sensor=false&mode=" + mode;
         }
         try {
 
@@ -306,6 +320,12 @@ public class MapActivity extends FragmentActivity {
             NodeList pList = polyline.getChildNodes();
 
            String points = pList.item(1).getTextContent();
+
+        NodeList wd = doc.getElementsByTagName("html_instructions");
+        for(int j=0;j<wd.getLength();++j){
+            CharSequence s =Html.fromHtml("<html>"+wd.item(j).getTextContent()+"</html>");
+            writtenDirections.add(s);
+        }
 
         return decodePoly(points);
 
@@ -378,6 +398,8 @@ public class MapActivity extends FragmentActivity {
                         .width(5);
                 line = map.addPolyline(lineOptions);
                 line.setPoints(result);
+                ImageButton ib = (ImageButton) findViewById(R.id.dList);
+                ib.setVisibility(View.VISIBLE);
             }
 
         }
@@ -420,6 +442,8 @@ public class MapActivity extends FragmentActivity {
                         .width(5);
                 line = map.addPolyline(lineOptions);
                 line.setPoints(result);
+                ImageButton ib = (ImageButton) findViewById(R.id.dList);
+                ib.setVisibility(View.VISIBLE);
             }
         }
 

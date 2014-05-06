@@ -3,63 +3,60 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="hobby.app.MapActivity" >
+    tools:context="hobby.app.MapActivity">
 
     <fragment xmlns:android="http://schemas.android.com/apk/res/android"
         android:id="@+id/map"
+        android:name="com.google.android.gms.maps.SupportMapFragment"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:name="com.google.android.gms.maps.SupportMapFragment" />
+        android:layout_height="match_parent" />
 
     <LinearLayout
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:background="#80000000"
-        android:gravity="center_horizontal"
-        >
+        android:gravity="center_horizontal">
 
         <LinearLayout
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            >
+            android:layout_height="wrap_content">
+
             <Button
                 android:id="@+id/modeDrive"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_centerHorizontal="true"
-                android:text="Autóval"
-                android:onClick="onDriveClick"
                 android:background="@drawable/custom_button"
+                android:onClick="onDriveClick"
+                android:text="Autóval"
                 android:textAppearance="@style/button_text"
                 android:textColor="@android:color/white"
-                android:typeface="serif"
-                />
+                android:typeface="serif" />
 
             <Button
                 android:id="@+id/modeBike"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_centerHorizontal="true"
-                android:text="Kerékpárral"
-                android:onClick="onBikeClick"
+                android:layout_marginLeft="20dp"
+                android:layout_marginRight="20dp"
                 android:background="@drawable/custom_button"
+                android:onClick="onBikeClick"
+                android:text="Kerékpárral"
                 android:textAppearance="@style/button_text"
                 android:textColor="@android:color/white"
-                android:typeface="serif"
-                android:layout_marginRight="20dp"
-                android:layout_marginLeft="20dp"/>
+                android:typeface="serif" />
 
             <Button
                 android:id="@+id/modeWalking"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_centerHorizontal="true"
-                android:text="Gyalog"
-                android:onClick="onWalkingClick"
                 android:background="@drawable/custom_button"
+                android:onClick="onWalkingClick"
+                android:text="Gyalog"
                 android:textAppearance="@style/button_text"
                 android:textColor="@android:color/white"
-                android:typeface="serif"/>
+                android:typeface="serif" />
+
+
 
         </LinearLayout>
     </LinearLayout>

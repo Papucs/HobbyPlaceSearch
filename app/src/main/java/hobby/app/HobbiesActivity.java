@@ -1,9 +1,13 @@
 package hobby.app;
 
+import android.app.ActionBar;
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.app.NavUtils;
 import android.util.SparseBooleanArray;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -22,10 +26,24 @@ public class HobbiesActivity extends Activity {
     private String[] names, values;
     private ListView listView;
 
+    private void showActionBar() {
+        LayoutInflater inflator = (LayoutInflater) this
+                .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        View v = inflator.inflate(R.layout.list_ab, null);
+
+        ActionBar actionBar = getActionBar();
+        actionBar.setDisplayHomeAsUpEnabled(true);
+        actionBar.setDisplayShowHomeEnabled (false);
+        actionBar.setDisplayShowCustomEnabled(true);
+        actionBar.setDisplayShowTitleEnabled(false);
+        actionBar.setCustomView(v);
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_hobbies);
+        showActionBar();
         Intent intent = getIntent();
 
 
@@ -53,10 +71,15 @@ public class HobbiesActivity extends Activity {
         listView.setAdapter(adapter);
     }
 
+    public void back(View v){
+        onBackPressed();
+    }
+
     public void getSelectedItems(View v)
     {
         //---toggle the check displayed next to the item---
         ArrayList<String> checked = new ArrayList<String>();
+        ArrayList<String> checkedNames = new ArrayList<String>();
         int len =listView.getCount();
         SparseBooleanArray c=listView.getCheckedItemPositions();
 
@@ -64,24 +87,17 @@ public class HobbiesActivity extends Activity {
         {
             if (c.get(i)) {
                 String item = pois.get(names[i]);
+                checkedNames.add(names[i]);
                 checked.add(item);
 
             }
         }
         Intent resultIntent  = new Intent();
+        resultIntent.putStringArrayListExtra("checkedNames", checkedNames);
         resultIntent.putStringArrayListExtra("CheckedItems", checked);
         setResult(Activity.RESULT_OK, resultIntent);
         finish();
         //Toast.makeText(this,"Selected Items- " + s,Toast.LENGTH_SHORT).show();
-    }
-
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.hobbies, menu);
-        return true;
     }
 
     @Override
@@ -90,9 +106,15 @@ public class HobbiesActivity extends Activity {
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
-        if (id == R.id.action_settings) {
-            return true;
+
+        switch(id) {
+            case R.id.backBtn:
+                onBackPressed();
+//                NavUtils.navigateUpFromSameTask(this);
+                return true;
         }
+
+
         return super.onOptionsItemSelected(item);
     }
 

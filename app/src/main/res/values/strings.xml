@@ -1,12 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">HobbyPlaceSearch</string>
+    <string name="app_name">Freetime place searcher</string>
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
     <string name="title_activity_hobbies">HobbiesActivity</string>
     <string name="title_activity_map">MapActivity</string>
     <string name="title_activity_resultlist">ResultlistActivtiy</string>
     <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="title_activity_map2">Map2Activity</string>
+    <string name="title_section1">Section 1</string>
+    <string name="title_section2">Section 2</string>
+    <string name="title_section3">Section 3</string>
+    <string name="title_activity_directions">Directions</string>
 
 </resources>

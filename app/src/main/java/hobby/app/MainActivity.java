@@ -1,36 +1,68 @@
 package hobby.app;
 
+import android.app.ActionBar;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.location.Address;
+import android.location.Geocoder;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.google.android.gms.maps.model.LatLng;
+
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
 
 public class MainActivity extends Activity {
 
     private ArrayList<String> selected = new ArrayList<String>();
+    private ArrayList<String> selectedNames = new ArrayList<String>();
     private TextView si ;
-    private final Activity thisActivtiy = this;
     private boolean frequentlyVisited = false;
+    private boolean otherOrigin = false;
+    private EditText et;
+
+    private void showActionBar() {
+        LayoutInflater inflator = (LayoutInflater) this
+                .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        View v = inflator.inflate(R.layout.main_ab, null);
+        ActionBar actionBar = getActionBar();
+        actionBar.setDisplayHomeAsUpEnabled(true);
+        actionBar.setDisplayShowHomeEnabled (false);
+        actionBar.setDisplayShowCustomEnabled(true);
+        actionBar.setDisplayShowTitleEnabled(false);
+        actionBar.setCustomView(v);
+    }
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        si = (TextView) findViewById(R.id.selectedItems);
 
+        super.onCreate(savedInstanceState);
+        getActionBar().hide();
+        setContentView(R.layout.activity_main);
+
+        //showActionBar();
+        si = (TextView) findViewById(R.id.selectedItems);
+        et = (EditText) findViewById(R.id.otherOrigin);
 
         if(!checkInternet()){
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -59,6 +91,8 @@ public class MainActivity extends Activity {
             AlertDialog alert = builder.create();
             alert.show();
         }
+
+
     }
 
     public boolean checkInternet() {
@@ -86,7 +120,6 @@ public class MainActivity extends Activity {
             }
         });
         Intent intent = new Intent(getApplicationContext(),HobbiesActivity.class);
-        intent.putExtra("frequency", frequentlyVisited);
         startActivityForResult(intent, 10);
         //startActivity(intent);
     }
@@ -121,9 +154,65 @@ public class MainActivity extends Activity {
             alert.show();
         }else {
             Intent intent = new Intent(getApplicationContext(), ResultlistActivity.class);
-            intent.putStringArrayListExtra("selectedTypes", selected);
+            Bundle b = new Bundle();
+            String s = et.getText().toString();
+            if(otherOrigin && !s.isEmpty()) {
+                LatLng orig = geoLocate(s);
+                b.putDoubleArray("origin",new double[]{orig.latitude, orig.longitude});
+            }else{
+                b.putDoubleArray("origin",getCurrentLocation());
+            }
+            b.putStringArrayList("selectedTypes", selected);
+            b.putBoolean("frequency", frequentlyVisited);
+            intent.putExtras(b);
             startActivity(intent);
         }
+    }
+
+    public double[] getCurrentLocation(){
+        LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+
+        // Define a listener that responds to location updates
+        LocationListener locationListener = new LocationListener() {
+            public void onLocationChanged(Location location) {
+                // Called when a new location is found by the network location provider.
+                //makeUseOfNewLocation(location);
+            }
+
+            public void onStatusChanged(String provider, int status, Bundle extras) {}
+
+            public void onProviderEnabled(String provider) {}
+
+            public void onProviderDisabled(String provider) {}
+        };
+
+        String provider = LocationManager.NETWORK_PROVIDER;
+
+        locationManager.requestLocationUpdates(provider, 0, 0, locationListener);
+
+        Location l =locationManager.getLastKnownLocation(provider);
+        return new double[]{l.getLatitude(), l.getLongitude()};
+    }
+
+    public LatLng geoLocate(String location) {
+        Geocoder gc = new Geocoder(this);
+        List<Address> list = null;
+        try {
+            list = gc.getFromLocationName(location, 1);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        Address addr = list.get(0);
+        double lat = addr.getLatitude();
+        double lng = addr.getLongitude();
+
+        LatLng ll = new LatLng(lat, lng);
+        return ll;
+
+    }
+
+    public void back(){
+        onBackPressed();
     }
 
     @Override
@@ -133,30 +222,27 @@ public class MainActivity extends Activity {
             case (10):{
                 if(resultCode == Activity.RESULT_OK){
                     selected = data.getStringArrayListExtra("CheckedItems");
-                    si.setText(selected.toString());
+                    selectedNames = data.getStringArrayListExtra("checkedNames");
+                    si.setText(selectedNames.toString());
                 }
             }
         }
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
 
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.main, menu);
-        return true;
+    public void onBoxChecked(View v){
+        if(!otherOrigin) {
+            et.setEnabled(true);
+            otherOrigin = true;
+        }else{
+            et.setEnabled(false);
+            otherOrigin=false;
+        }
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-        if (id == R.id.action_settings) {
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
+    public void onResume(){
+        super.onResume();
     }
 
     @Override

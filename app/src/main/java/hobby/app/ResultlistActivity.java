@@ -1,22 +1,27 @@
 package hobby.app;
 
+import android.app.ActionBar;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.text.Html;
 import android.util.Log;
 import android.util.SparseBooleanArray;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.TextView;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
@@ -50,56 +55,34 @@ public class ResultlistActivity extends Activity {
     private ArrayList<Map<String,String>> results = new ArrayList<Map<String, String>>();
     private List<Place> resultPlaces = new ArrayList<Place>();
     private ListView listView;
-    private ArrayList<String> res = new ArrayList<String>();
-    private String myLocation;
-    private Location currentLocation;
+    private double[] currentLocation;
     private final String API_KEY = "AIzaSyBx0rWF_XU9agah1JdVQ9q_73RCRKTm6NI";
     private boolean frequentlyVisited;
 
+    private void showActionBar() {
+        LayoutInflater inflator = (LayoutInflater) this
+                .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        View v = inflator.inflate(R.layout.list_ab2, null);
+        ActionBar actionBar = getActionBar();
+        actionBar.setDisplayHomeAsUpEnabled(true);
+        actionBar.setDisplayShowHomeEnabled (false);
+        actionBar.setDisplayShowCustomEnabled(true);
+        actionBar.setDisplayShowTitleEnabled(false);
+        actionBar.setCustomView(v);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_resultlist);
+        showActionBar();
         Intent intent = getIntent();
-        types=intent.getStringArrayListExtra("selectedTypes");
-        frequentlyVisited=intent.getBooleanExtra("frequency", false);
-
-        LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
-
-        // Define a listener that responds to location updates
-        LocationListener locationListener = new LocationListener() {
-            public void onLocationChanged(Location location) {
-                // Called when a new location is found by the network location provider.
-                //makeUseOfNewLocation(location);
-            }
-
-            public void onStatusChanged(String provider, int status, Bundle extras) {}
-
-            public void onProviderEnabled(String provider) {}
-
-            public void onProviderDisabled(String provider) {}
-        };
-
-        String provider = LocationManager.NETWORK_PROVIDER;
-
-        locationManager.requestLocationUpdates(provider, 0, 0, locationListener);
-
-        currentLocation=locationManager.getLastKnownLocation(provider);
-
-        myLocation = currentLocation.getLatitude()+","+currentLocation.getLongitude();
+        types=intent.getExtras().getStringArrayList("selectedTypes");
+        currentLocation = intent.getExtras().getDoubleArray("origin");
+        frequentlyVisited=intent.getExtras().getBoolean("frequency", false);
 
         new getPlacesAsyncTask().execute();
 
-    }
-
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.resultlist, menu);
-        return true;
     }
 
     @Override
@@ -132,7 +115,7 @@ public class ResultlistActivity extends Activity {
         }
         //https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=-33.8670522,151.1957362&radius=500&types=food&name=harbour&sensor=false&key=AddYourOwnKeyHere
         String uri =
-                "https://maps.googleapis.com/maps/api/place/nearbysearch/xml?location=" + myLocation + "&radius="+radius+"&types="+ t +"&sensor=true&key="+API_KEY;
+                "https://maps.googleapis.com/maps/api/place/nearbysearch/xml?location=" + currentLocation[0]+","+currentLocation[1] + "&radius="+radius+"&types="+ t +"&sensor=true&key="+API_KEY;
 
         try {
 
@@ -177,10 +160,15 @@ public class ResultlistActivity extends Activity {
             }
             places.add(p);
         }
-        Collections.sort(places, new CustomComparator());
+        Collections.sort(places, new RateComparator());
+        Collections.reverse(places);
         return places;
 
 
+    }
+
+    public void back(View v){
+        onBackPressed();
     }
 
     public void getSelectedItems(View v)
@@ -202,11 +190,9 @@ public class ResultlistActivity extends Activity {
         Intent intent  = new Intent(ResultlistActivity.this,MapActivity.class);
         Bundle bundle = new Bundle();
         bundle.putParcelableArrayList("checked", checked);
-        double[] x =new double[]{currentLocation.getLatitude(), currentLocation.getLongitude()};
-        bundle.putDoubleArray("latlng",x );
+        bundle.putDoubleArray("latlng",currentLocation );
         intent.putExtras(bundle);
         startActivity(intent);
-
     }
 
 
@@ -232,13 +218,16 @@ public class ResultlistActivity extends Activity {
                 m.put("FirstLine", resultPlaces.get(i).getName());
                 m.put("SecondLine",resultPlaces.get(i).getAddress());
                 results.add(m);
-                //Place p = resultPlaces.get(i);
-                //items.add(new Item(p.getName(), p.getAddress(), p.getRating().toString()));
-            }
 
+            }
+           List<CharSequence> res = new ArrayList<CharSequence>();
 
             for(int j=0; j<resultPlaces.size();++j){
-                res.add(resultPlaces.get(j).getName());
+               // res.add(resultPlaces.get(j).getName());
+                // CharSequence s =Html.fromHtml("<html>"+wd.item(j).getTextContent()+"</html>");
+                CharSequence cs = Html.fromHtml("<html><b>" + resultPlaces.get(j).getName()+
+                        "</b><br>" + resultPlaces.get(j).getRating());
+                res.add(cs);
             }
 
             listView = (ListView)findViewById(R.id.resultList);
@@ -247,25 +236,6 @@ public class ResultlistActivity extends Activity {
 
             final ArrayAdapter adapter = new ArrayAdapter(getBaseContext(),
                     android.R.layout.simple_list_item_multiple_choice,res);
-
-            /*
-            ArrayAdapter<MyObject> adapter = new ArrayAdapter<MyObject>(this, android.R.layout.simple_list_item_2, android.R.id.text1, result) {
-    @Override
-    public View getView(int position, View convertView, ViewGroup parent) {
-        View view = super.getView(position, convertView, parent);
-        TextView text1 = (TextView) view.findViewById(android.R.id.text1);
-        TextView text2 = (TextView) view.findViewById(android.R.id.text2);
-
-        text1.setText(result.get(position).OperatingSystem);
-        text2.setText(result.get(position).Platform);
-        return view;
-    }
-};
-             */
-            /*
-            MyAdapter adapter = new MyAdapter(getBaseContext(), items);*/
-
-
 
             listView.setAdapter(adapter);
 
