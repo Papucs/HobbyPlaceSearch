@@ -170,7 +170,7 @@ public class MapActivity extends FragmentActivity {
     }
 
     public void listDirections(View v) {
-        Intent intent = new Intent(MapActivity.this, Directions.class);
+        Intent intent = new Intent(MapActivity.this, DirectionsActivity.class);
         Bundle bundle = new Bundle();
         bundle.putCharSequenceArrayList("directionsList", writtenDirections);
         intent.putExtras(bundle);

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="match_parent"
+    android:layout_gravity="center_vertical"
+    android:background="@drawable/ab_bgr">
+
+    <ImageButton
+        android:id="@+id/backBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="70dp"
+        android:layout_alignParentLeft="true"
+        android:paddingLeft="10dp"
+        android:onClick="back"
+        android:src="@drawable/abc_ic_ab_back_holo_dark"
+        android:background="@drawable/ab_button_bgr"/>
+
+
+
+    <ImageButton
+        android:id="@+id/dList"
+        android:layout_width="wrap_content"
+        android:layout_height="55dp"
+        android:layout_alignParentRight="true"
+        android:src="@android:drawable/ic_menu_directions"
+        android:onClick="listDirections"
+        android:background="@drawable/ab_button_bgr"
+        android:visibility="invisible"/>
+</RelativeLayout>
