@@ -31,37 +31,49 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-
+/**
+ * kezdő képernyő és funkciók
+ */
 public class MainActivity extends Activity {
-
+    /**
+     * API híváshoz szükséges kiválasztott típusok listája
+     */
     private ArrayList<String> selected = new ArrayList<String>();
+
+    /**
+     * kiválasztott típusok megjelenítendő neveinek listája
+     */
     private ArrayList<String> selectedNames = new ArrayList<String>();
-    private TextView si ;
+
+    /**
+     * Látogatás gyakoriságát jelző logikai változó
+     */
     private boolean frequentlyVisited = false;
+
+    /**
+     * Kiindulási helyet jelző logikai változó
+     */
     private boolean otherOrigin = false;
+
+    /**
+     * kiindulási hely megadására alkalmas beviteli mező
+     */
     private EditText et;
 
-    private void showActionBar() {
-        LayoutInflater inflator = (LayoutInflater) this
-                .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        View v = inflator.inflate(R.layout.main_ab, null);
-        ActionBar actionBar = getActionBar();
-        actionBar.setDisplayHomeAsUpEnabled(true);
-        actionBar.setDisplayShowHomeEnabled (false);
-        actionBar.setDisplayShowCustomEnabled(true);
-        actionBar.setDisplayShowTitleEnabled(false);
-        actionBar.setCustomView(v);
-    }
-
+    /**
+     * Grafikai elemek megjelenítése, internet hozzáférés ellenőrzése
+     * Amennyiben nem találhatő hálózat, felugró értesítést ad.
+     * @param savedInstanceState
+     */
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
-        getActionBar().hide();
+        setTheme(R.style.AppThemeNoBar);
+
         setContentView(R.layout.activity_main);
 
-        //showActionBar();
-        si = (TextView) findViewById(R.id.selectedItems);
+
         et = (EditText) findViewById(R.id.otherOrigin);
 
         if(!checkInternet()){
@@ -95,15 +107,21 @@ public class MainActivity extends Activity {
 
     }
 
+    /**
+     * Hálozati elérés ellenőrzése (WIFI, ill mobilnet)
+     * @return Logikai érték, annak fügvényében, érzékel-e valamilyen aktív hálózati hozzáférést
+     */
     public boolean checkInternet() {
         ConnectivityManager connec = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo wifi = connec.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
         NetworkInfo mobile = connec.getNetworkInfo(ConnectivityManager.TYPE_MOBILE);
-        // Check if wifi or mobile network is available or not. If any of them is
-        // available or connected then it will return true, otherwise false;
         return wifi.isConnected() || mobile.isConnected();
     }
 
+    /**
+     * Elindítja a típusok kiválasztására alkalmas Activity-t, hogy később fogadhassa az eredményeket tőle.
+     * @param v
+     */
     public void startHobbiesActivtiy(View v){
         RadioGroup radioG = (RadioGroup) findViewById(R.id.radiusGroup);
         radioG.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
@@ -121,9 +139,34 @@ public class MainActivity extends Activity {
         });
         Intent intent = new Intent(getApplicationContext(),HobbiesActivity.class);
         startActivityForResult(intent, 10);
-        //startActivity(intent);
     }
 
+    /**
+     * A típusok Activity-étből való visszatérés után fogadja a beérkező eredményeket
+     * @param requestCode
+     * @param resultCode
+     * @param data
+     */
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data){
+        super.onActivityResult(requestCode,resultCode,data);
+        TextView si = (TextView) findViewById(R.id.selectedItems);
+        switch(requestCode){
+            case (10):{
+                if(resultCode == Activity.RESULT_OK){
+                    selected = data.getStringArrayListExtra("CheckedItems");
+                    selectedNames = data.getStringArrayListExtra("checkedNames");
+                    si.setText(selectedNames.toString());
+                }
+            }
+        }
+    }
+
+    /**
+     * A megadott típusok alapján elindítja a helyszínek kereséért felelős Activityt,
+     * ha nem adtunk meg egyetlen típust sem, felugró értesítést ad és átnavigál a típusok listájához
+     * @param v
+     */
     public void startResultlistActivity(View v){
 
         if(selected.size()==0){
@@ -131,14 +174,6 @@ public class MainActivity extends Activity {
             builder.setTitle("Válassz helyszínt")
                     .setMessage("Nem adtál eg egyetlen keresendő típust sem! ")
                     .setCancelable(true)
-                    .setNegativeButton("Mégse",
-                            new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int id) {
-                                    dialog.cancel();
-                                    //MainActivity.this.finish();
-                                }
-                            }
-                    )
                     .setPositiveButton("Pótolom!",
                             new DialogInterface.OnClickListener() {
                                 public void onClick(DialogInterface dialog, int id) {
@@ -169,14 +204,16 @@ public class MainActivity extends Activity {
         }
     }
 
+    /**
+     * saját helyzetünk meghatározása
+     * @return szélességi és hosszúsági koordináták tömb formájában
+     */
     public double[] getCurrentLocation(){
         LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
 
-        // Define a listener that responds to location updates
         LocationListener locationListener = new LocationListener() {
             public void onLocationChanged(Location location) {
-                // Called when a new location is found by the network location provider.
-                //makeUseOfNewLocation(location);
+
             }
 
             public void onStatusChanged(String provider, int status, Bundle extras) {}
@@ -194,6 +231,12 @@ public class MainActivity extends Activity {
         return new double[]{l.getLatitude(), l.getLongitude()};
     }
 
+    /**
+     * A megadott cím geológiai koordinátákká alakítása
+     * @param location A kiindulási cím
+     * @return szélességi és hosszúsági koordináta a paraméterben kapott címhez
+     *
+     */
     public LatLng geoLocate(String location) {
         Geocoder gc = new Geocoder(this);
         List<Address> list = null;
@@ -211,25 +254,10 @@ public class MainActivity extends Activity {
 
     }
 
-    public void back(){
-        onBackPressed();
-    }
-
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data){
-        super.onActivityResult(requestCode,resultCode,data);
-        switch(requestCode){
-            case (10):{
-                if(resultCode == Activity.RESULT_OK){
-                    selected = data.getStringArrayListExtra("CheckedItems");
-                    selectedNames = data.getStringArrayListExtra("checkedNames");
-                    si.setText(selectedNames.toString());
-                }
-            }
-        }
-    }
-
-
+    /**
+     * kiindulási helyszín megadását leehtővé tevő CheckBox állapotainak figyelése
+     * @param v
+     */
     public void onBoxChecked(View v){
         if(!otherOrigin) {
             et.setEnabled(true);

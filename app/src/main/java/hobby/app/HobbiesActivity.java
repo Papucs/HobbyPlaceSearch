@@ -21,11 +21,24 @@ import java.util.Map;
 
 public class HobbiesActivity extends Activity {
 
+    /**
+     * A megjelenítendő típusokhoz tartozó angol elnevezések, későbbi API híváshoz szükségesek
+     */
+    private Map<String,String> types = new HashMap<String, String>();
 
-    private Map<String,String> pois = new HashMap<String, String>();
-    private String[] names, values;
+    /**
+     * A megjelenítendő tapusok listája
+     */
+    private String[] names;
+
+    /**
+     * lista
+     */
     private ListView listView;
 
+    /**
+     * fejléc kirajzolása
+     */
     private void showActionBar() {
         LayoutInflater inflator = (LayoutInflater) this
                 .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
@@ -38,6 +51,12 @@ public class HobbiesActivity extends Activity {
         actionBar.setDisplayShowTitleEnabled(false);
         actionBar.setCustomView(v);
     }
+
+    /**
+     *grafikus elemek kirajzolása
+     * a szülő Activitytől érkező adatok olvasása
+     * @param savedInstanceState
+     */
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,12 +73,12 @@ public class HobbiesActivity extends Activity {
             "Videótéka","Mozi","Múzeum","Éjjeli szórakozóhely", "Park", "Kisállat kereskedés", "Kegyhely", "Étterem", "Cipőbolt", "Bevásárló központ", "Spa", "Stadion", "Vasútállomás", "Állatkert"};
 
 
-        values = new String[]{"airport", "amusement_park","aquarium","art_gallery", "bakery", "bar", "beauty_salon", "bicycle_store", "book_store", "bowling_alley","cafe","car_rental",
+        String[] values = new String[]{"airport", "amusement_park","aquarium","art_gallery", "bakery", "bar", "beauty_salon", "bicycle_store", "book_store", "bowling_alley","cafe","car_rental",
                 "casino","cemetery","church","clothing_store","florist","food","furniture_store","gym","hair_care","hardware_store","health","hindu_temple","jewelry_store","library","liquor_store",
                 "movie_rental","movie_theater","museum","night_club","park","pet_store","place_of_worship","restaurant","shoe_store","shopping_mall","spa","stadium","train_station", "zoo"};
 
         for(int i=0; i<names.length;++i){
-            pois.put(names[i],values[i]);
+            types.put(names[i],values[i]);
         }
 
         ArrayList<String> list = new ArrayList<String>();
@@ -71,13 +90,20 @@ public class HobbiesActivity extends Activity {
         listView.setAdapter(adapter);
     }
 
+    /**
+     * "Vissza" gomb lenyomásának eventje
+     * @param v
+     */
     public void back(View v){
         onBackPressed();
     }
 
+    /**
+     * A listában kiválasztott elemek kiválasztása és továbbítása a meghívásra ekrülő Activitynek
+     * @param v
+     */
     public void getSelectedItems(View v)
     {
-        //---toggle the check displayed next to the item---
         ArrayList<String> checked = new ArrayList<String>();
         ArrayList<String> checkedNames = new ArrayList<String>();
         int len =listView.getCount();
@@ -86,7 +112,7 @@ public class HobbiesActivity extends Activity {
         for (int i = 0; i<len; i++)
         {
             if (c.get(i)) {
-                String item = pois.get(names[i]);
+                String item = types.get(names[i]);
                 checkedNames.add(names[i]);
                 checked.add(item);
 
@@ -97,25 +123,14 @@ public class HobbiesActivity extends Activity {
         resultIntent.putStringArrayListExtra("CheckedItems", checked);
         setResult(Activity.RESULT_OK, resultIntent);
         finish();
-        //Toast.makeText(this,"Selected Items- " + s,Toast.LENGTH_SHORT).show();
     }
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
+    public void onResume(){
+        super.onResume();
+    }
 
-        switch(id) {
-            case R.id.backBtn:
-                onBackPressed();
-//                NavUtils.navigateUpFromSameTask(this);
-                return true;
-        }
-
-
-        return super.onOptionsItemSelected(item);
+    public void onStop(){
+        super.onStop();
     }
 
 }

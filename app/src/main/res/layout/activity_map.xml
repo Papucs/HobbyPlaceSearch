@@ -3,7 +3,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="hobby.app.MapActivity">
+    tools:context="hobby.app.MapActivity"
+    android:id="@+id/map_layout">
 
     <fragment xmlns:android="http://schemas.android.com/apk/res/android"
         android:id="@+id/map"
@@ -17,47 +18,49 @@
         android:background="#80000000"
         android:gravity="center_horizontal">
 
-        <LinearLayout
+        <RelativeLayout
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:id="@+id/modeBar">
 
-            <Button
+
+            <CheckBox
                 android:id="@+id/modeDrive"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:background="@drawable/custom_button"
                 android:onClick="onDriveClick"
                 android:text="Autóval"
                 android:textAppearance="@style/button_text"
                 android:textColor="@android:color/white"
-                android:typeface="serif" />
+                android:typeface="serif"
+                android:layout_marginRight="80dp"/>
 
-            <Button
+            <CheckBox
                 android:id="@+id/modeBike"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="20dp"
-                android:layout_marginRight="20dp"
-                android:background="@drawable/custom_button"
+                android:layout_marginLeft="5dp"
+                android:layout_marginRight="5dp"
                 android:onClick="onBikeClick"
                 android:text="Kerékpárral"
                 android:textAppearance="@style/button_text"
                 android:textColor="@android:color/white"
-                android:typeface="serif" />
+                android:typeface="serif"
+                android:layout_below="@id/modeDrive"
+                android:layout_centerInParent="true"/>
 
-            <Button
+            <CheckBox
                 android:id="@+id/modeWalking"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:background="@drawable/custom_button"
                 android:onClick="onWalkingClick"
                 android:text="Gyalog"
                 android:textAppearance="@style/button_text"
                 android:textColor="@android:color/white"
-                android:typeface="serif" />
+                android:typeface="serif"
+                android:layout_toRightOf="@id/modeDrive"/>
 
 
-
-        </LinearLayout>
+        </RelativeLayout>
     </LinearLayout>
 </FrameLayout>

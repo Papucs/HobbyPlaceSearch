@@ -24,6 +24,8 @@ android {
             proguardFile 'some-other-rules.txt'
         }
     }
+
+
 }
 
 dependencies {

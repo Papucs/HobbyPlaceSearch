@@ -18,7 +18,7 @@
         android:layout_marginTop="15dp"
         android:textAppearance="@style/button_text"
         android:textColor="@android:color/white"
-        android:text="Hobbik kezelése"
+        android:text="Típusok kiválasztása"
         android:onClick="startHobbiesActivtiy"
         android:background="@drawable/custom_button"
         android:layout_marginBottom="20dp"
@@ -61,6 +61,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Gyakrabban látogatnám"
+                    android:checked="true"
                    />
 
                 <RadioButton

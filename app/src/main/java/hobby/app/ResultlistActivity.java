@@ -2,8 +2,10 @@ package hobby.app;
 
 import android.app.ActionBar;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
@@ -21,6 +23,7 @@ import android.view.View;
 import android.view.Window;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import org.w3c.dom.Document;
@@ -58,6 +61,7 @@ public class ResultlistActivity extends Activity {
     private double[] currentLocation;
     private final String API_KEY = "AIzaSyBx0rWF_XU9agah1JdVQ9q_73RCRKTm6NI";
     private boolean frequentlyVisited;
+    private ProgressBar pb;
 
     private void showActionBar() {
         LayoutInflater inflator = (LayoutInflater) this
@@ -75,6 +79,7 @@ public class ResultlistActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_resultlist);
+        pb=(ProgressBar) findViewById(R.id.pb_loading);
         showActionBar();
         Intent intent = getIntent();
         types=intent.getExtras().getStringArrayList("selectedTypes");
@@ -187,12 +192,33 @@ public class ResultlistActivity extends Activity {
             }
         }
 
-        Intent intent  = new Intent(ResultlistActivity.this,MapActivity.class);
-        Bundle bundle = new Bundle();
-        bundle.putParcelableArrayList("checked", checked);
-        bundle.putDoubleArray("latlng",currentLocation );
-        intent.putExtras(bundle);
-        startActivity(intent);
+        if(checked.size()==0){
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle("Válassz úticélt!")
+                    .setMessage("Legalább egy úticél megadása szükséges! ")
+                    .setCancelable(true)
+                    .setPositiveButton("Ok",
+                            new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int id) {
+                                    dialog.cancel();
+                                    //Intent intent = new Intent(getApplicationContext(), HobbiesActivity.class);
+                                    //startActivityForResult(intent, 10);
+
+                                }
+                            }
+                    );
+
+            AlertDialog alert = builder.create();
+            alert.show();
+        }else {
+
+            Intent intent = new Intent(ResultlistActivity.this, MapActivity.class);
+            Bundle bundle = new Bundle();
+            bundle.putParcelableArrayList("checked", checked);
+            bundle.putDoubleArray("latlng", currentLocation);
+            intent.putExtras(bundle);
+            startActivity(intent);
+        }
     }
 
 
@@ -200,7 +226,7 @@ public class ResultlistActivity extends Activity {
         private ProgressDialog pdia;
         @Override
         protected void onPreExecute(){
-
+            pb.setVisibility(View.VISIBLE);
         }
 
         @Override
@@ -211,7 +237,7 @@ public class ResultlistActivity extends Activity {
         @Override
         protected void onPostExecute(List<Place> result){
             resultPlaces.addAll(result);
-           // ArrayList<Item> items = new ArrayList<Item>();
+
 
             for (int i=0; i<resultPlaces.size();++i){
                 Map<String, String> m = new HashMap<String, String>();
@@ -235,9 +261,10 @@ public class ResultlistActivity extends Activity {
 
 
             final ArrayAdapter adapter = new ArrayAdapter(getBaseContext(),
-                    android.R.layout.simple_list_item_multiple_choice,res);
+                    R.layout.list_item,res);
 
             listView.setAdapter(adapter);
+            pb.setVisibility(View.GONE);
 
         }
     }
