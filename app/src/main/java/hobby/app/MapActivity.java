@@ -5,6 +5,7 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -16,7 +17,9 @@ import android.view.ViewTreeObserver;
 import android.widget.CheckBox;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
+import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
+import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -44,6 +47,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -56,24 +60,93 @@ class DistanceComparator implements Comparator<Place> {
     }
 }
 
+/**
+ * Térkép megjelenítéséért felelős Activity
+ */
 public class MapActivity extends FragmentActivity {
-
+    /**
+     *  térkép objektum
+     */
     private GoogleMap map;
+
+    /**
+     * az úti célokat tartalmazó lista
+     */
     private ArrayList<Place> selectedPlaces = new ArrayList<Place>();
+
+    /**
+     * aktuális helyzetünk
+     */
     private LatLng currentLocation;
+
+    /**
+     * az éppen kiválasztott mód elérhetőségét jelzi
+     */
     private boolean modeNotAvailable = false;
+
+    /**
+     * felugró ablak
+     */
     private AlertDialog alert;
-    private ArrayList<CharSequence> writtenDirections = new ArrayList<CharSequence>();
+
+    /**
+     * a térképre felrajzolt markerek listája
+     */
     private List<Marker> markers = new ArrayList<Marker>();
+
+    /**
+     *  jelzi, hogy lekérdeztünk-e biciklis útvonalat
+     */
     private boolean withBicycle = false;
+
+    /**
+     * jelzi, hogy lekérdeztünk-e autós útvonalat
+     */
     private boolean withCar = false;
+
+    /**
+     * jelzi, hogy lekérdeztünk-e gyalogos útvonalat
+     */
     private boolean onFoot = false;
-    private Polyline bikeLine, carLine, walkLine;
+
+    /**
+     * megadott PolylineOptionök
+     */
+    private Map<String,PolylineOptions> polylineOptions = new HashMap<String,PolylineOptions>();
+
+    /**
+     * ütvonalak
+     */
+    private Map<String , Polyline> polylines = new HashMap<String, Polyline>();
+
+
+    /**
+     * szöveges leíráshoz átvivő gomb
+     */
     private ImageButton ib;
+
+    /**
+     * mindig a legutóbb csekkolt négyzetet tárolja
+     */
     private CheckBox checked;
-    private int numOfChecked = 0;
+
+    /**
+     * klikkeltünk-e a map-en
+     */
     private boolean onMapClicked = false;
 
+    /**
+     * a térképre aktuálisan kirajzolt útvonalakat tartalmazza
+     */
+    private Map<String, ArrayList<CharSequence>> writtenDirectionsAll = new HashMap<String,ArrayList<CharSequence> >();
+
+    private ProgressBar pb;
+    private View mb;
+    private final String API_KEY="AIzaSyBx0rWF_XU9agah1JdVQ9q_73RCRKTm6NI";
+
+    /**
+     * fejléc létrehozása
+     */
     private void showActionBar() {
         LayoutInflater inflator = (LayoutInflater) this
                 .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
@@ -83,19 +156,22 @@ public class MapActivity extends FragmentActivity {
         actionBar.setDisplayShowHomeEnabled(false);
         actionBar.setDisplayShowCustomEnabled(true);
         actionBar.setDisplayShowTitleEnabled(false);
-        //pb=(ProgressBar) findViewById(R.id.route_loading);
         actionBar.setCustomView(v);
     }
 
-
+    /**
+     * Activity és grafikus felületének létrehozása
+     * @param savedInstanceState
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_map);
-
+        pb=(ProgressBar) findViewById(R.id.pb_route_loading);
         showActionBar();
-        ib = (ImageButton) findViewById(R.id.dList);
 
+        ib = (ImageButton)  findViewById(R.id.dList);
+        mb = (RelativeLayout) findViewById(R.id.modeBar);
         map = ((SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map)).getMap();
 
@@ -122,7 +198,7 @@ public class MapActivity extends FragmentActivity {
                     builder.include(marker.getPosition());
                 }
                 LatLngBounds bounds = builder.build();
-                map.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds, -10));
+                map.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds, 40));
             }
         });
 
@@ -130,11 +206,11 @@ public class MapActivity extends FragmentActivity {
             @Override
             public void onMapClick(LatLng latLng) {
                 if (!onMapClicked) {
-                    View mb = (RelativeLayout) findViewById(R.id.modeBar);
+                    //View mb = (RelativeLayout) findViewById(R.id.modeBar);
                     mb.setVisibility(View.GONE);
                     onMapClicked = true;
                 } else {
-                    View mb = (RelativeLayout) findViewById(R.id.modeBar);
+                   // View mb = (RelativeLayout) findViewById(R.id.modeBar);
                     onMapClicked = false;
                     mb.setVisibility(View.VISIBLE);
                 }
@@ -142,15 +218,20 @@ public class MapActivity extends FragmentActivity {
         });
     }
 
+
+
     public void makeAlert() {
         AlertDialog.Builder builder = new AlertDialog.Builder(MapActivity.this);
         builder.setTitle("Mód nem elérhető");
-        builder.setMessage("A térségben az általad választott mód nem elérhető, kérlek válassz másiakt! ");
-        builder.setCancelable(true);
+        builder.setMessage("A térségben az általad választott mód nem elérhető, kérlek válassz másikat! ");
+        builder.setCancelable(false);
         builder.setPositiveButton("Ok",
                 new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
                         checked.setChecked(false);
+                        pb.setVisibility(View.GONE);
+                        mb.setVisibility(View.VISIBLE);
+                        modeNotAvailable=false;
                         dialog.cancel();
                     }
                 }
@@ -172,7 +253,13 @@ public class MapActivity extends FragmentActivity {
     public void listDirections(View v) {
         Intent intent = new Intent(MapActivity.this, DirectionsActivity.class);
         Bundle bundle = new Bundle();
-        bundle.putCharSequenceArrayList("directionsList", writtenDirections);
+        if(writtenDirectionsAll.containsKey("drive")) {
+            bundle.putCharSequenceArrayList("directionsList", writtenDirectionsAll.get("drive"));
+        }else if(writtenDirectionsAll.containsKey("bicycling")){
+            bundle.putCharSequenceArrayList("directionsList", writtenDirectionsAll.get("bicycling"));
+        }else if(writtenDirectionsAll.containsKey("walking")){
+            bundle.putCharSequenceArrayList("directionsList", writtenDirectionsAll.get("walking"));
+        }
         intent.putExtras(bundle);
         startActivity(intent);
     }
@@ -182,12 +269,15 @@ public class MapActivity extends FragmentActivity {
             new DrawDirectionsAsyncTask().execute("drive");
             withCar = true;
             checked = (CheckBox) findViewById(R.id.modeDrive);
-            ++numOfChecked;
         } else {
             withCar = false;
-            carLine.remove();
-            --numOfChecked;
-            ib.setEnabled(false);
+            polylines.get("car").remove();
+            polylines.remove("car");
+            polylineOptions.remove("car");
+            writtenDirectionsAll.remove("drive");
+            if(writtenDirectionsAll.size()==1) {
+                ib.setVisibility(View.VISIBLE);
+            }
 
         }
 
@@ -198,12 +288,15 @@ public class MapActivity extends FragmentActivity {
             new DrawDirectionsAsyncTask().execute("bicycling");
             withBicycle = true;
             checked = (CheckBox) findViewById(R.id.modeBike);
-            ++numOfChecked;
         } else {
             withBicycle = false;
-            bikeLine.remove();
-            --numOfChecked;
-            ib.setEnabled(false);
+            polylines.get("bike").remove();
+            polylines.remove("bike");
+            polylineOptions.remove("bike");
+            writtenDirectionsAll.remove("bicycling");
+            if(writtenDirectionsAll.size()==1) {
+                ib.setVisibility(View.INVISIBLE);
+            }
 
         }
     }
@@ -213,12 +306,15 @@ public class MapActivity extends FragmentActivity {
             new DrawDirectionsAsyncTask().execute("walking");
             onFoot = true;
             checked = (CheckBox) findViewById(R.id.modeWalking);
-            ++numOfChecked;
         } else {
             onFoot = false;
-            walkLine.remove();
-            --numOfChecked;
-            ib.setEnabled(false);
+            polylines.get("walk").remove();
+            polylines.remove("walk");
+            polylineOptions.remove("walk");
+            writtenDirectionsAll.remove("walking");
+            if(writtenDirectionsAll.size()==1) {
+                ib.setVisibility(View.INVISIBLE);
+            }
         }
 
     }
@@ -266,6 +362,7 @@ public class MapActivity extends FragmentActivity {
         int x;
         int c = rows.getLength();
         x = 0;
+
         NodeList rowContent = rows.item(0).getChildNodes();
         for (int j = 3; j < rowContent.getLength(); ++j) {
             if (rowContent.item(j).getNodeName().equals("element")) {
@@ -292,7 +389,7 @@ public class MapActivity extends FragmentActivity {
         if (selectedPlaces.size() == 1) {
 
             uri =
-                    "http://maps.google.com/maps/api/directions/xml?origin=" + orig + "&destination=" + dest + "&language=HUNGARIAN&region=HU&sensor=false&mode=" + mode;
+                    "https://maps.google.com/maps/api/directions/xml?origin=" + orig + "&destination=" + dest + "&language=hu&region=HU&sensor=false&mode=" + mode+"&key="+API_KEY;
         } else {
 
 
@@ -302,14 +399,12 @@ public class MapActivity extends FragmentActivity {
             }
 
             uri =
-                    "http://maps.google.com/maps/api/directions/xml?origin=" + orig + "&destination=" + dest + "&waypoints=" + wp + "&language=hu5&region=HU&sensor=false&mode=" + mode;
+                    "https://maps.google.com/maps/api/directions/xml?origin=" + orig + "&destination=" + dest + "&waypoints=" + wp + "&language=hu&region=HU&sensor=false&mode=" + mode+"&key="+API_KEY;
         }
         try {
 
             DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
             DocumentBuilder db = dbf.newDocumentBuilder();
-            URL u = new URL(uri);
-
             doc = db.parse(new URL(uri).openStream());
 
         } catch (MalformedURLException e) {
@@ -337,15 +432,34 @@ public class MapActivity extends FragmentActivity {
         NodeList pList = polyline.getChildNodes();
 
         String points = pList.item(1).getTextContent();
+        ArrayList<CharSequence> writtenDirections = new ArrayList<CharSequence>();
 
-        NodeList wd = doc.getElementsByTagName("html_instructions");
-        for (int j = 0; j < wd.getLength(); ++j) {
-            CharSequence s = Html.fromHtml("<html>" + wd.item(j).getTextContent() + "</html>");
-            writtenDirections.add(s);
-        }
+            NodeList wd = doc.getElementsByTagName("html_instructions");
+            for (int j = 0; j < wd.getLength(); ++j) {
+                CharSequence s = Html.fromHtml("<html>" + wd.item(j).getTextContent() + "</html>");
+                writtenDirections.add(s);
+
+            }
+            writtenDirectionsAll.put(mode, writtenDirections);
 
         return decodePoly(points);
 
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+
+        // Checks the orientation of the screen
+        if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            for(PolylineOptions p : polylineOptions.values()){
+                map.addPolyline(p);
+            }
+        } else if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT){
+            for(PolylineOptions p : polylineOptions.values()){
+                map.addPolyline(p);
+            }
+        }
     }
 
     //code source: http://www.geekyblogger.com/2010/12/decoding-polylines-from-google-maps.html
@@ -385,7 +499,8 @@ public class MapActivity extends FragmentActivity {
 
         @Override
         protected void onPreExecute() {
-
+            mb.setVisibility(View.GONE);
+            pb.setVisibility(View.VISIBLE);
         }
 
         @Override
@@ -411,27 +526,38 @@ public class MapActivity extends FragmentActivity {
                 if (mode.equals("bicycling")) {
                     PolylineOptions lineOptions = new PolylineOptions()
                             .color(Color.GREEN)
-                            .width(5);
-                    bikeLine = map.addPolyline(lineOptions);
-                    bikeLine.setPoints(result);
+                            .width(5)
+                            .addAll(result);
+                    Polyline line = map.addPolyline(lineOptions);
+                    polylineOptions.put("bike", lineOptions);
+                    polylines.put("bike",line);
+
                 } else if (mode.equals("drive")) {
                     PolylineOptions lineOptions = new PolylineOptions()
                             .color(Color.MAGENTA)
-                            .width(5);
-                    carLine = map.addPolyline(lineOptions);
-                    carLine.setPoints(result);
+                            .width(5)
+                            .addAll(result);
+                    Polyline line = map.addPolyline(lineOptions);
+                    polylineOptions.put("car", lineOptions);
+                    polylines.put("car", line);
                 } else {
                     PolylineOptions lineOptions = new PolylineOptions()
                             .color(Color.BLUE)
-                            .width(5);
-                    walkLine = map.addPolyline(lineOptions);
-                    walkLine.setPoints(result);
+                            .width(5)
+                            .addAll(result);
+                    Polyline line = map.addPolyline(lineOptions);
+                    polylineOptions.put("walk",lineOptions);
+                    polylines.put("walk", line);
                 }
-                if (numOfChecked==1) {
-                    ib.setEnabled(true);
+                if (writtenDirectionsAll.size()==1) {
+                    ib.setVisibility(View.VISIBLE);
                 }else{
-                    ib.setEnabled(false);
+
+                    ib.setVisibility(View.INVISIBLE);
                 }
+
+                pb.setVisibility(View.GONE);
+                mb.setVisibility(View.VISIBLE);
             }
         }
 

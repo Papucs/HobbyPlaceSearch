@@ -58,14 +58,15 @@
         <activity
             android:name="hobby.app.MapActivity"
             android:label="@string/app_name"
-            android:theme="@style/AppTheme">
+            android:theme="@style/AppTheme"
+            android:configChanges="orientation|screenSize">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="hobby.app.ResultlistActivity" />
         </activity>
 
         <activity
-            android:name="hobby.app.Directions"
+            android:name="hobby.app.DirectionsActivity"
             android:label="@string/app_name"
             android:theme="@style/AppTheme">
             <meta-data

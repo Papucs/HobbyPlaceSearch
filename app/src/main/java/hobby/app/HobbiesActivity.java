@@ -27,7 +27,7 @@ public class HobbiesActivity extends Activity {
     private Map<String,String> types = new HashMap<String, String>();
 
     /**
-     * A megjelenítendő tapusok listája
+     * A megjelenítendő típusok listája
      */
     private String[] names;
 

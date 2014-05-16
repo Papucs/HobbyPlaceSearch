@@ -82,7 +82,7 @@
         android:text="Máshonnan indulok: "
         android:layout_below="@id/radiusGroup"
         android:onClick="onBoxChecked"/>
-    <EditText
+    <AutoCompleteTextView
         android:id="@+id/otherOrigin"
         android:layout_width="300dp"
         android:layout_height="wrap_content"

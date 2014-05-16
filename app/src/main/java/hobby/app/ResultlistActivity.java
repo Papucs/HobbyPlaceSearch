@@ -3,28 +3,18 @@ package hobby.app;
 import android.app.ActionBar;
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.graphics.drawable.Drawable;
-import android.location.Location;
-import android.location.LocationListener;
-import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.Html;
-import android.util.Log;
 import android.util.SparseBooleanArray;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
-import android.view.Window;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.ProgressBar;
-import android.widget.TextView;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
@@ -90,21 +80,9 @@ public class ResultlistActivity extends Activity {
 
     }
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-        if (id == R.id.action_settings) {
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
 
     public List<Place> getPlaces() {
 
-        //String myLocation = getMyLocation();
         String t = types.get(0);
         String radius="";
         for(int i=1; i<types.size();++i){
@@ -118,7 +96,7 @@ public class ResultlistActivity extends Activity {
         }else{
             radius="10000";
         }
-        //https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=-33.8670522,151.1957362&radius=500&types=food&name=harbour&sensor=false&key=AddYourOwnKeyHere
+
         String uri =
                 "https://maps.googleapis.com/maps/api/place/nearbysearch/xml?location=" + currentLocation[0]+","+currentLocation[1] + "&radius="+radius+"&types="+ t +"&sensor=true&key="+API_KEY;
 
@@ -139,37 +117,41 @@ public class ResultlistActivity extends Activity {
         }
 
         NodeList nList = doc.getElementsByTagName("result");
-        for(int i=0; i<nList.getLength();++i){
+        if(nList.getLength()!=0) {
+            for (int i = 0; i < nList.getLength(); ++i) {
 
-            Node result = nList.item(i);
-            NodeList attribs = result.getChildNodes();
+                Node result = nList.item(i);
+                NodeList attribs = result.getChildNodes();
 
-            Place p = new Place();
+                Place p = new Place();
 
-            for(int j=1; j<attribs.getLength();j+=2){
-                String str = attribs.item(j).getNodeName();
-                if(str.equals("name")){
-                    p.setName(attribs.item(j).getTextContent());
-                }else if(str.equals("vicinity")){
-                    p.setAddress(attribs.item(j).getTextContent());
-                }else if(str.equals("geometry")) {
-                    NodeList loc = attribs.item(j).getChildNodes();
-                    String s = loc.item(1).getNodeName();
-                    NodeList coords = loc.item(1).getChildNodes();
-                    double lat = Double.parseDouble(coords.item(1).getTextContent());
-                    double lng = Double.parseDouble(coords.item(3).getTextContent());
-                    p.setCoord(lat, lng);
-                }else if(str.equals("rating")) {
-                    p.setRating(Double.parseDouble(attribs.item(j).getTextContent()));
+                for (int j = 1; j < attribs.getLength(); j += 2) {
+                    String str = attribs.item(j).getNodeName();
+                    if (str.equals("name")) {
+                        p.setName(attribs.item(j).getTextContent());
+                    } else if (str.equals("vicinity")) {
+                        p.setAddress(attribs.item(j).getTextContent());
+                    } else if (str.equals("geometry")) {
+                        NodeList loc = attribs.item(j).getChildNodes();
+                        String s = loc.item(1).getNodeName();
+                        NodeList coords = loc.item(1).getChildNodes();
+                        double lat = Double.parseDouble(coords.item(1).getTextContent());
+                        double lng = Double.parseDouble(coords.item(3).getTextContent());
+                        p.setCoord(lat, lng);
+                    } else if (str.equals("rating")) {
+                        p.setRating(Double.parseDouble(attribs.item(j).getTextContent()));
+                    }
                 }
+                places.add(p);
             }
-            places.add(p);
+
+            Collections.sort(places, new RateComparator());
+            Collections.reverse(places);
+
+            return places;
+        }else{
+           return null;
         }
-        Collections.sort(places, new RateComparator());
-        Collections.reverse(places);
-        return places;
-
-
     }
 
     public void back(View v){
@@ -178,7 +160,6 @@ public class ResultlistActivity extends Activity {
 
     public void getSelectedItems(View v)
     {
-        //---toggle the check displayed next to the item---
         ArrayList<Place> checked = new ArrayList<Place>();
         int len =listView.getCount();
         SparseBooleanArray c=listView.getCheckedItemPositions();
@@ -201,8 +182,6 @@ public class ResultlistActivity extends Activity {
                             new DialogInterface.OnClickListener() {
                                 public void onClick(DialogInterface dialog, int id) {
                                     dialog.cancel();
-                                    //Intent intent = new Intent(getApplicationContext(), HobbiesActivity.class);
-                                    //startActivityForResult(intent, 10);
 
                                 }
                             }
@@ -223,7 +202,7 @@ public class ResultlistActivity extends Activity {
 
 
     private class getPlacesAsyncTask extends AsyncTask<Void, Void, List<Place>> {
-        private ProgressDialog pdia;
+
         @Override
         protected void onPreExecute(){
             pb.setVisibility(View.VISIBLE);
@@ -236,35 +215,54 @@ public class ResultlistActivity extends Activity {
 
         @Override
         protected void onPostExecute(List<Place> result){
-            resultPlaces.addAll(result);
+            if(result!=null) {
+                resultPlaces.addAll(result);
 
 
-            for (int i=0; i<resultPlaces.size();++i){
-                Map<String, String> m = new HashMap<String, String>();
-                m.put("FirstLine", resultPlaces.get(i).getName());
-                m.put("SecondLine",resultPlaces.get(i).getAddress());
-                results.add(m);
+                for (int i = 0; i < resultPlaces.size(); ++i) {
+                    Map<String, String> m = new HashMap<String, String>();
+                    m.put("FirstLine", resultPlaces.get(i).getName());
+                    m.put("SecondLine", resultPlaces.get(i).getAddress());
+                    results.add(m);
 
+                }
+                List<CharSequence> res = new ArrayList<CharSequence>();
+
+                for (int j = 0; j < resultPlaces.size(); ++j) {
+                    CharSequence cs = Html.fromHtml("<html><b>" + resultPlaces.get(j).getName() +
+                            "</b><br>" + resultPlaces.get(j).getRating());
+                    res.add(cs);
+                }
+
+                listView = (ListView) findViewById(R.id.resultList);
+
+
+                final ArrayAdapter adapter = new ArrayAdapter(getBaseContext(),
+                        R.layout.list_item, res);
+
+                listView.setAdapter(adapter);
+                pb.setVisibility(View.GONE);
+            }else{
+                AlertDialog.Builder builder = new AlertDialog.Builder(ResultlistActivity.this);
+
+                builder.setTitle("Nincs találat")
+                        .setMessage("Nincs a környéken az általad keresett típusú helyszín. ")
+                        .setCancelable(false)
+                        .setPositiveButton("OK",
+                                new DialogInterface.OnClickListener() {
+                                    public void onClick(DialogInterface dialog, int id) {
+                                        onBackPressed();
+                                    }
+                                }
+                        );
+
+                final AlertDialog alert = builder.create();
+                ResultlistActivity.this.runOnUiThread(new java.lang.Runnable() {
+                    public void run() {
+                        alert.show();
+                    }
+                });
             }
-           List<CharSequence> res = new ArrayList<CharSequence>();
-
-            for(int j=0; j<resultPlaces.size();++j){
-               // res.add(resultPlaces.get(j).getName());
-                // CharSequence s =Html.fromHtml("<html>"+wd.item(j).getTextContent()+"</html>");
-                CharSequence cs = Html.fromHtml("<html><b>" + resultPlaces.get(j).getName()+
-                        "</b><br>" + resultPlaces.get(j).getRating());
-                res.add(cs);
-            }
-
-            listView = (ListView)findViewById(R.id.resultList);
-
-
-
-            final ArrayAdapter adapter = new ArrayAdapter(getBaseContext(),
-                    R.layout.list_item,res);
-
-            listView.setAdapter(adapter);
-            pb.setVisibility(View.GONE);
 
         }
     }
