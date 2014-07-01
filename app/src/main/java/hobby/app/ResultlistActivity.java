@@ -16,6 +16,9 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -42,17 +45,53 @@ class RateComparator implements Comparator<Place> {
     }
 }
 
+/**
+ * Helyszíntalálatok megjelenítése
+ */
 public class ResultlistActivity extends Activity {
 
-    private ArrayList<String> types;
-    private ArrayList<Map<String,String>> results = new ArrayList<Map<String, String>>();
+    /**
+     * a keresendő típusok listája
+     */
+    private ArrayList<String> types, types2;
+
+    /**
+     * keresés által kapott helyek listája
+     */
     private List<Place> resultPlaces = new ArrayList<Place>();
+
+    /**
+     * lista megjelenítő
+     */
     private ListView listView;
+
+    /**
+     * aktuálsi helyzet koordinátái
+     */
     private double[] currentLocation;
+
+    /**
+     * GoogleAPI kulcs
+     */
     private final String API_KEY = "AIzaSyBx0rWF_XU9agah1JdVQ9q_73RCRKTm6NI";
+
+    /**
+     * helyek látogatottsága
+     */
     private boolean frequentlyVisited;
+
+    /**
+     * folyamatjelző
+     */
     private ProgressBar pb;
 
+    private String ineKey;
+    private long ineId;
+
+
+    /**
+     * fejléc megjelenítése
+     */
     private void showActionBar() {
         LayoutInflater inflator = (LayoutInflater) this
                 .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
@@ -65,6 +104,10 @@ public class ResultlistActivity extends Activity {
         actionBar.setCustomView(v);
     }
 
+    /**
+     * grafikus elemek megjelenítése, Activity létrehozása, a hívó Activtiytől érkező adatok kiolvasása
+     * @param savedInstanceState
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -73,78 +116,128 @@ public class ResultlistActivity extends Activity {
         showActionBar();
         Intent intent = getIntent();
         types=intent.getExtras().getStringArrayList("selectedTypes");
+        types2=intent.getExtras().getStringArrayList("selectedTypes2");
         currentLocation = intent.getExtras().getDoubleArray("origin");
         frequentlyVisited=intent.getExtras().getBoolean("frequency", false);
+        ineKey=intent.getExtras().getString("ineTrackKey");
+        ineId = intent.getExtras().getLong("ineTrackId");
 
         new getPlacesAsyncTask().execute();
 
     }
 
 
+
+    /**
+     * A megadott paraméterek alapján találati lista lekérése
+     * @return találati lista
+     */
     public List<Place> getPlaces() {
 
-        String t = types.get(0);
-        String radius="";
-        for(int i=1; i<types.size();++i){
-            t=t+"|"+types.get(i);
-        }
-        Document doc = null;
-
         List<Place> places= new ArrayList<Place>();
-        if(frequentlyVisited){
-            radius="4000";
-        }else{
-            radius="10000";
-        }
 
-        String uri =
-                "https://maps.googleapis.com/maps/api/place/nearbysearch/xml?location=" + currentLocation[0]+","+currentLocation[1] + "&radius="+radius+"&types="+ t +"&sensor=true&key="+API_KEY;
 
-        try {
+        if(types.size()!=0) {
+            String t = types.get(0);
+            String radius = "";
+            for (int i = 1; i < types.size(); ++i) {
+                t = t + "|" + types.get(i);
+            }
+            Document doc = null;
 
-            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-            DocumentBuilder db = dbf.newDocumentBuilder();
-            doc = db.parse(new URL(uri).openStream());
-
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (SAXException e) {
-            e.printStackTrace();
-        } catch (ParserConfigurationException e) {
-            e.printStackTrace();
-        }
-
-        NodeList nList = doc.getElementsByTagName("result");
-        if(nList.getLength()!=0) {
-            for (int i = 0; i < nList.getLength(); ++i) {
-
-                Node result = nList.item(i);
-                NodeList attribs = result.getChildNodes();
-
-                Place p = new Place();
-
-                for (int j = 1; j < attribs.getLength(); j += 2) {
-                    String str = attribs.item(j).getNodeName();
-                    if (str.equals("name")) {
-                        p.setName(attribs.item(j).getTextContent());
-                    } else if (str.equals("vicinity")) {
-                        p.setAddress(attribs.item(j).getTextContent());
-                    } else if (str.equals("geometry")) {
-                        NodeList loc = attribs.item(j).getChildNodes();
-                        String s = loc.item(1).getNodeName();
-                        NodeList coords = loc.item(1).getChildNodes();
-                        double lat = Double.parseDouble(coords.item(1).getTextContent());
-                        double lng = Double.parseDouble(coords.item(3).getTextContent());
-                        p.setCoord(lat, lng);
-                    } else if (str.equals("rating")) {
-                        p.setRating(Double.parseDouble(attribs.item(j).getTextContent()));
-                    }
-                }
-                places.add(p);
+            if (frequentlyVisited) {
+                radius = "4000";
+            } else {
+                radius = "10000";
             }
 
+            String uri =
+                    "https://maps.googleapis.com/maps/api/place/nearbysearch/xml?location=" + currentLocation[0] + "," + currentLocation[1] + "&radius=" + radius + "&types=" + t + "&sensor=true&key=" + API_KEY;
+
+            try {
+
+                DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+                DocumentBuilder db = dbf.newDocumentBuilder();
+                doc = db.parse(new URL(uri).openStream());
+
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (SAXException e) {
+                e.printStackTrace();
+            } catch (ParserConfigurationException e) {
+                e.printStackTrace();
+            }
+
+            NodeList nList = doc.getElementsByTagName("result");
+            if (nList.getLength() != 0) {
+                for (int i = 0; i < nList.getLength(); ++i) {
+
+                    Node result = nList.item(i);
+                    NodeList attribs = result.getChildNodes();
+
+                    Place p = new Place();
+
+                    for (int j = 1; j < attribs.getLength(); j += 2) {
+                        String str = attribs.item(j).getNodeName();
+                        if (str.equals("name")) {
+                            p.setName(attribs.item(j).getTextContent());
+                        } else if (str.equals("vicinity")) {
+                            p.setAddress(attribs.item(j).getTextContent());
+                        } else if (str.equals("geometry")) {
+                            NodeList loc = attribs.item(j).getChildNodes();
+                            String s = loc.item(1).getNodeName();
+                            NodeList coords = loc.item(1).getChildNodes();
+                            double lat = Double.parseDouble(coords.item(1).getTextContent());
+                            double lng = Double.parseDouble(coords.item(3).getTextContent());
+                            p.setCoord(lat, lng);
+                        } else if (str.equals("rating")) {
+                            p.setRating(Double.parseDouble(attribs.item(j).getTextContent()));
+                        }
+                    }
+                    places.add(p);
+                }
+
+            }
+        }
+            if(types2.size()!=0) {
+                JSONObject jo;
+                List<JSONObject> pois = new ArrayList<JSONObject>();
+                String url = "https://beta-api.inetrack.com/api?command=ObjectListCommand&descriptorName=userPoisDescName&searchParameters.descriptorName=userPoisDescName&searchParameters.userId=" + ineId + "&apikey=" + ineKey;
+
+                try {
+                    jo = new JSONObjectMaker(url).getObject();
+
+                    if (jo.getBoolean("success")) {
+
+                        JSONArray jaa = jo.getJSONArray("list");
+                        for(int i=0; i<jaa.length();++i){
+                            pois.add(jaa.getJSONObject(i));
+
+                        }
+
+                        for (JSONObject j : pois) {
+                            String type = j.getJSONObject("relationValues").getJSONObject("group").getString("displayName");
+                            if(types2.contains(type)) {
+                                Place p = new Place();
+                                p.setAddress("null");
+                                p.setName(j.getJSONObject("stringValues").getString("name"));
+
+                                String coord = j.getJSONObject("stringValues").getString("fence");
+                                String[] c = coord.split("\\(\\(");
+                                String cc = c[1].split("\\,")[0];
+                                String[] ccc = cc.split("\\s");
+                                p.setCoord(Double.parseDouble(ccc[0]), Double.parseDouble(ccc[1]));
+                                places.add(p);
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        if(places.size()!=0){
             Collections.sort(places, new RateComparator());
             Collections.reverse(places);
 
@@ -154,10 +247,18 @@ public class ResultlistActivity extends Activity {
         }
     }
 
+    /**
+     * vissza az előző Activityre
+     * @param v
+     */
     public void back(View v){
         onBackPressed();
     }
 
+    /**
+     * A listából kiválasztott elemek kiolvasása, továbbítás a meghívásra kerülő MapActivtiynek
+     * @param v
+     */
     public void getSelectedItems(View v)
     {
         ArrayList<Place> checked = new ArrayList<Place>();
@@ -201,31 +302,40 @@ public class ResultlistActivity extends Activity {
     }
 
 
+    /**
+     * adatok lekérése
+     */
     private class getPlacesAsyncTask extends AsyncTask<Void, Void, List<Place>> {
 
+        /**
+         * folyamatjelző megjelenítése
+         */
         @Override
         protected void onPreExecute(){
             pb.setVisibility(View.VISIBLE);
         }
 
+        /**
+         * Itt történik meg tényelgesen az API hívás
+         * @param params
+         * @return találati lista
+         */
         @Override
         protected List<Place> doInBackground(Void... params) {
             return getPlaces();
         }
 
+        /**
+         * visszatérés az UI-hoz, folyamatjelző elrejtése, lista megjelenítése
+         * @param result
+         */
         @Override
         protected void onPostExecute(List<Place> result){
             if(result!=null) {
                 resultPlaces.addAll(result);
 
 
-                for (int i = 0; i < resultPlaces.size(); ++i) {
-                    Map<String, String> m = new HashMap<String, String>();
-                    m.put("FirstLine", resultPlaces.get(i).getName());
-                    m.put("SecondLine", resultPlaces.get(i).getAddress());
-                    results.add(m);
 
-                }
                 List<CharSequence> res = new ArrayList<CharSequence>();
 
                 for (int j = 0; j < resultPlaces.size(); ++j) {

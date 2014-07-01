@@ -1,108 +1,116 @@
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/scrollView"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:paddingLeft="@dimen/activity_horizontal_margin"
-    android:paddingRight="@dimen/activity_horizontal_margin"
-    android:paddingTop="@dimen/activity_vertical_margin"
-    android:paddingBottom="@dimen/activity_vertical_margin"
-    android:scrollbars="vertical"
-    tools:context="hobby.app.MainActivity"
-    android:background="@drawable/list_bgr">
+    android:fillViewport="true">
 
-    <Button
-        android:id="@+id/addHobby"
-        android:layout_centerHorizontal="true"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="15dp"
-        android:textAppearance="@style/button_text"
-        android:textColor="@android:color/white"
-        android:text="Típusok kiválasztása"
-        android:onClick="startHobbiesActivtiy"
-        android:background="@drawable/custom_button"
-        android:layout_marginBottom="20dp"
-        android:typeface="serif"/>
+    <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/list_bgr"
+        android:paddingBottom="@dimen/activity_vertical_margin"
+        android:paddingLeft="@dimen/activity_horizontal_margin"
+        android:paddingRight="@dimen/activity_horizontal_margin"
+        android:paddingTop="@dimen/activity_vertical_margin"
+        android:scrollbars="vertical"
+        tools:context="hobby.app.MainActivity">
 
-    <View
-        android:layout_width="300dp"
-        android:layout_height="1dp"
-        android:layout_centerInParent="true"
-        android:layout_below="@id/addHobby"
-        android:background="@drawable/line"/>
-
-    <TextView
-            android:id="@+id/selectedItems"
-            android:layout_below="@+id/addHobby"
+        <Button
+            android:id="@+id/addHobby"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:layout_marginBottom="20dp"/>
+            android:layout_centerHorizontal="true"
+            android:layout_marginBottom="20dp"
+            android:layout_marginTop="15dp"
+            android:background="@drawable/custom_button"
+            android:onClick="startHobbiesActivtiy"
+            android:text="Típusok kiválasztása"
+            android:textAppearance="@style/button_text"
+            android:textColor="@android:color/white"
+            android:typeface="serif" />
 
-    <View
-        android:layout_width="300dp"
-        android:layout_height="1dp"
-        android:layout_centerInParent="true"
-        android:layout_below="@id/selectedItems"
-        android:background="@drawable/line" />
+        <View
+            android:layout_width="300dp"
+            android:layout_height="1dp"
+            android:layout_below="@id/addHobby"
+            android:layout_centerInParent="true"
+            android:background="@drawable/line" />
 
-            <RadioGroup
-                android:id="@+id/radiusGroup"
-                android:layout_below="@id/selectedItems"
+        <TextView
+            android:id="@+id/selectedItems"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/addHobby"
+            android:layout_marginBottom="20dp"
+            android:layout_marginTop="10dp" />
+
+        <View
+            android:layout_width="300dp"
+            android:layout_height="1dp"
+            android:layout_below="@id/selectedItems"
+            android:layout_centerInParent="true"
+            android:background="@drawable/line" />
+
+        <RadioGroup
+            android:id="@+id/radiusGroup"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/selectedItems"
+            android:layout_centerHorizontal="true"
+            android:layout_marginBottom="20dp"
+            android:layout_marginTop="30dp"
+            android:gravity="center_horizontal">
+
+            <RadioButton
+                android:id="@+id/radio1"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_centerHorizontal="true"
-                android:layout_marginTop="30dp"
-                android:layout_marginBottom="20dp"
-                android:gravity="center_horizontal">
+                android:checked="true"
+                android:text="Gyakrabban látogatnám" />
 
-                <RadioButton
-                    android:id="@+id/radio1"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Gyakrabban látogatnám"
-                    android:checked="true"
-                   />
-
-                <RadioButton
-                    android:id="@+id/radio2"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginLeft="30dp"
-                    android:text="Csak most mennék el"
-                    android:layout_gravity="left"/>
-
-            </RadioGroup>
-
-    <CheckBox
-        android:id="@+id/otherOriginText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true"
-        android:text="Máshonnan indulok: "
-        android:layout_below="@id/radiusGroup"
-        android:onClick="onBoxChecked"/>
-    <AutoCompleteTextView
-        android:id="@+id/otherOrigin"
-        android:layout_width="300dp"
-        android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true"
-        android:layout_below="@+id/otherOriginText"
-        android:enabled="false"/>
-
-
-            <Button
-                android:id="@+id/search"
+            <RadioButton
+                android:id="@+id/radio2"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_centerHorizontal="true"
-                android:layout_below="@id/otherOrigin"
-                android:layout_marginTop="20dp"
-                android:text="Keresés!"
-                android:onClick="startResultlistActivity"
-                android:background="@drawable/custom_button"
-                android:textAppearance="@style/button_text"
-                android:textColor="@android:color/white"
-                android:typeface="serif"/>
+                android:layout_gravity="left"
+                android:layout_marginLeft="30dp"
+                android:text="Csak most mennék el" />
 
-</RelativeLayout>
+        </RadioGroup>
+
+        <CheckBox
+            android:id="@+id/otherOriginText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/radiusGroup"
+            android:layout_centerHorizontal="true"
+            android:onClick="onBoxChecked"
+            android:text="Máshonnan indulok: " />
+
+        <AutoCompleteTextView
+            android:id="@+id/otherOrigin"
+            android:layout_width="300dp"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/otherOriginText"
+            android:layout_centerHorizontal="true"
+            android:enabled="false" />
+
+
+        <Button
+            android:id="@+id/search"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/otherOrigin"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="20dp"
+            android:background="@drawable/custom_button"
+            android:onClick="startResultlistActivity"
+            android:text="Keresés!"
+            android:textAppearance="@style/button_text"
+            android:textColor="@android:color/white"
+            android:typeface="serif" />
+
+    </RelativeLayout>
+</ScrollView>

@@ -52,7 +52,9 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
-
+/**
+ * Place objektumok távolság szerinti rendezéséhez Comparator osztály
+ */
 class DistanceComparator implements Comparator<Place> {
     @Override
     public int compare(Place a, Place b) {
@@ -140,8 +142,19 @@ public class MapActivity extends FragmentActivity {
      */
     private Map<String, ArrayList<CharSequence>> writtenDirectionsAll = new HashMap<String,ArrayList<CharSequence> >();
 
+    /**
+     * folyamat jelző
+     */
     private ProgressBar pb;
+
+    /**
+     * közlekedési módokat tartalmazó sáv
+     */
     private View mb;
+
+    /**
+     * Google API kulcs
+     */
     private final String API_KEY="AIzaSyBx0rWF_XU9agah1JdVQ9q_73RCRKTm6NI";
 
     /**
@@ -206,11 +219,10 @@ public class MapActivity extends FragmentActivity {
             @Override
             public void onMapClick(LatLng latLng) {
                 if (!onMapClicked) {
-                    //View mb = (RelativeLayout) findViewById(R.id.modeBar);
+
                     mb.setVisibility(View.GONE);
                     onMapClicked = true;
                 } else {
-                   // View mb = (RelativeLayout) findViewById(R.id.modeBar);
                     onMapClicked = false;
                     mb.setVisibility(View.VISIBLE);
                 }
@@ -219,7 +231,9 @@ public class MapActivity extends FragmentActivity {
     }
 
 
-
+    /**
+     * felugró ablak létrehozása
+     */
     public void makeAlert() {
         AlertDialog.Builder builder = new AlertDialog.Builder(MapActivity.this);
         builder.setTitle("Mód nem elérhető");
@@ -240,6 +254,10 @@ public class MapActivity extends FragmentActivity {
         alert = builder.create();
     }
 
+
+    /**
+     * kiválasztott helyek megjelenítése a térképen
+     */
     public void drawSpots() {
         for (int i = 0; i < selectedPlaces.size(); ++i) {
 
@@ -250,6 +268,10 @@ public class MapActivity extends FragmentActivity {
         }
     }
 
+    /**
+     * Útvonal szöveges megjelenítéséért felelős Activtiy elindítása
+     * @param v
+     */
     public void listDirections(View v) {
         Intent intent = new Intent(MapActivity.this, DirectionsActivity.class);
         Bundle bundle = new Bundle();
@@ -264,6 +286,10 @@ public class MapActivity extends FragmentActivity {
         startActivity(intent);
     }
 
+    /**
+     * Autós útvonal lekérése és kirajzolása
+     * @param v
+     */
     public void onDriveClick(View v) {
         if (!withCar) {
             new DrawDirectionsAsyncTask().execute("drive");
@@ -283,6 +309,10 @@ public class MapActivity extends FragmentActivity {
 
     }
 
+    /**
+     * Kerékpáros útvonal lekérése és kirajzolása
+     * @param v
+     */
     public void onBikeClick(View v) {
         if (!withBicycle) {
             new DrawDirectionsAsyncTask().execute("bicycling");
@@ -301,6 +331,10 @@ public class MapActivity extends FragmentActivity {
         }
     }
 
+    /**
+     * Gyalogos útvonal kirajzolása
+     * @param v
+     */
     public void onWalkingClick(View v) {
         if (!onFoot) {
             new DrawDirectionsAsyncTask().execute("walking");
@@ -319,11 +353,17 @@ public class MapActivity extends FragmentActivity {
 
     }
 
+    /**
+     * Visszalépés az előző Activity-re
+     * @param v
+     */
     public void back(View v) {
         onBackPressed();
     }
 
-
+    /**
+     * Az egyes helyszínek közötti távolságoklekérése
+     */
     public void getDistances() {
 
         Map<Integer, String> points = new HashMap<Integer, String>();
@@ -376,6 +416,11 @@ public class MapActivity extends FragmentActivity {
     }
 
 
+    /**
+     * Lekéri a kiindulási ponttól kezdve a legtávolabbi helyszínig minden más helyszínt érintve az útvonalat
+     * @param mode
+     * @return az egyes pontos közti útvon listája földrajzi koordináták sorozataként
+     */
     public List<LatLng> getDirections(String mode) {
         getDistances();
         Collections.sort(selectedPlaces, new DistanceComparator());
@@ -446,6 +491,10 @@ public class MapActivity extends FragmentActivity {
 
     }
 
+    /**
+     * Ha a képernyő tájolása megváltozik, ez a függvény gondoskodik róla, hogy a felrajzolt útvonalak a térképen maradjanak
+     * @param newConfig
+     */
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
@@ -493,16 +542,27 @@ public class MapActivity extends FragmentActivity {
         return poly;
     }
 
+    /**
+     * Útvonalak lekérése és kirajzolása az UI-tól eltérő szálon
+     */
     private class DrawDirectionsAsyncTask extends AsyncTask<String, Void, List<LatLng>> {
 
         private String mode;
 
+        /**
+         * folyamat jelző megjelenítése
+         */
         @Override
         protected void onPreExecute() {
             mb.setVisibility(View.GONE);
             pb.setVisibility(View.VISIBLE);
         }
 
+        /**
+         * adatok lekérése
+         * @param params
+         * @return útvonal
+         */
         @Override
         protected List<LatLng> doInBackground(String... params) {
 
@@ -511,6 +571,10 @@ public class MapActivity extends FragmentActivity {
 
         }
 
+        /**
+         * itt már elérjük az UI-t, itt történik meg az útvonal tényleges térképre rajzolása; folyamat jelző eltűntetése
+         * @param result
+         */
         @Override
         protected void onPostExecute(List<LatLng> result) {
 

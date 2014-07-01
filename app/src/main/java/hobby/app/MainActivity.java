@@ -31,6 +31,7 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -49,10 +50,14 @@ public class MainActivity extends Activity implements AdapterView.OnItemClickLis
      */
     private ArrayList<String> selected = new ArrayList<String>();
 
+    private ArrayList<String> selected2 = new ArrayList<String>();
+
     /**
      * kiválasztott típusok megjelenítendő neveinek listája
      */
     private ArrayList<String> selectedNames = new ArrayList<String>();
+
+    private ArrayList<String> selectedNames2 = new ArrayList<String>();
 
     /**
      * Látogatás gyakoriságát jelző logikai változó
@@ -73,6 +78,9 @@ public class MainActivity extends Activity implements AdapterView.OnItemClickLis
      * API kulcs
      */
     private final String API_KEY="AIzaSyBx0rWF_XU9agah1JdVQ9q_73RCRKTm6NI";
+
+    private String ineKey;
+    private long ineId;
 
 
     /**
@@ -101,53 +109,18 @@ public class MainActivity extends Activity implements AdapterView.OnItemClickLis
 
         setContentView(R.layout.activity_main);
 
+        Intent intent = getIntent();
+        Bundle b = intent.getExtras();
+        ineId = b.getLong("id");
+        ineKey = b.getString("apikey");
 
         orig = (AutoCompleteTextView) findViewById(R.id.otherOrigin);
         orig.setAdapter(new PlacesAutoCompleteAdapter(this, android.R.layout.simple_list_item_1));
         orig.setOnItemClickListener(this);
 
-        if (!checkInternet()) {
-            AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setTitle("Hálózat nem elérhető")
-                    .setMessage("Engedélyezz valamilyen hálózati hozzáférést! ")
-                    .setCancelable(true)
-                    .setNegativeButton("Mégse",
-                            new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int id) {
-                                    // dialog.cancel();
-                                    MainActivity.this.finish();
-                                }
-                            }
-                    )
-                    .setPositiveButton("Ok",
-                            new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int id) {
-                                    dialog.cancel();
-                                    Intent intent = new Intent(Settings.ACTION_SETTINGS);
-                                    startActivity(intent);
-
-                                }
-                            }
-                    );
-
-            AlertDialog alert = builder.create();
-            alert.show();
-        }
-
-
     }
 
-    /**
-     * Hálozati elérés ellenőrzése (WIFI, ill mobilnet)
-     *
-     * @return Logikai érték, annak fügvényében, érzékel-e valamilyen aktív hálózati hozzáférést
-     */
-    public boolean checkInternet() {
-        ConnectivityManager connec = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo wifi = connec.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
-        NetworkInfo mobile = connec.getNetworkInfo(ConnectivityManager.TYPE_MOBILE);
-        return wifi.isConnected() || mobile.isConnected();
-    }
+
 
     /**
      * Elindítja a típusok kiválasztására alkalmas Activity-t, hogy később fogadhassa az eredményeket tőle.
@@ -189,7 +162,20 @@ public class MainActivity extends Activity implements AdapterView.OnItemClickLis
                 if (resultCode == Activity.RESULT_OK) {
                     selected = data.getStringArrayListExtra("CheckedItems");
                     selectedNames = data.getStringArrayListExtra("checkedNames");
-                    si.setText(selectedNames.toString());
+
+                    selected2 = data.getStringArrayListExtra("CheckedItems2");
+                    selectedNames2 = data.getStringArrayListExtra("checkedNames2");
+
+
+                    String tmp="";
+                    for(String s : selectedNames){
+                        tmp+=s+", ";
+                    }
+                    for(String s: selectedNames2){
+                        tmp+=s+", ";
+                    }
+
+                    si.setText(tmp);
                 }
             }
         }
@@ -203,7 +189,7 @@ public class MainActivity extends Activity implements AdapterView.OnItemClickLis
      */
     public void startResultlistActivity(View v) {
 
-        if (selected.size() == 0) {
+        if (selected.size() == 0 && selected2.size()==0) {
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setTitle("Válassz helyszínt")
                     .setMessage("Nem adtál meg egyetlen keresendő típust sem! ")
@@ -230,6 +216,9 @@ public class MainActivity extends Activity implements AdapterView.OnItemClickLis
                 if (orig != null) {
                     b.putDoubleArray("origin", new double[]{orig.latitude, orig.longitude});
                     b.putStringArrayList("selectedTypes", selected);
+                    b.putStringArrayList("selectedTypes2", selected2);
+                    b.putString("ineTrackKey", ineKey);
+                    b.putLong("ineTrackId", ineId);
                     b.putBoolean("frequency", frequentlyVisited);
                     intent.putExtras(b);
                     startActivity(intent);
@@ -253,6 +242,9 @@ public class MainActivity extends Activity implements AdapterView.OnItemClickLis
             } else {
                 b.putDoubleArray("origin", getCurrentLocation());
                 b.putStringArrayList("selectedTypes", selected);
+                b.putStringArrayList("selectedTypes2", selected2);
+                b.putString("ineTrackKey", ineKey);
+                b.putLong("ineTrackId", ineId);
                 b.putBoolean("frequency", frequentlyVisited);
                 intent.putExtras(b);
                 startActivity(intent);
@@ -403,7 +395,7 @@ public class MainActivity extends Activity implements AdapterView.OnItemClickLis
         }
 
         /**
-         * a taláalti lista i-edik elemét adja meg
+         * a találati lista i-edik elemét adja meg
          * @param index
          * @return az i-edik lista elem
          */
@@ -414,7 +406,7 @@ public class MainActivity extends Activity implements AdapterView.OnItemClickLis
 
         /**
          *
-         * @return
+         * @return a mezőbe írt karaktereknek megfelelő keresési eredmények
          */
         @Override
         public Filter getFilter() {

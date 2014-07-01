@@ -2,39 +2,48 @@ package hobby.app;
 
 import android.app.ActionBar;
 import android.app.Activity;
+import android.app.ListFragment;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.NavUtils;
+import android.support.v4.view.PagerTabStrip;
+import android.support.v4.view.ViewPager;
 import android.util.SparseBooleanArray;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AbsListView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Vector;
 
 
-public class HobbiesActivity extends Activity {
-
+public class HobbiesActivity extends FragmentActivity {
     /**
      * A megjelenítendő típusokhoz tartozó angol elnevezések, későbbi API híváshoz szükségesek
      */
     private Map<String,String> types = new HashMap<String, String>();
 
+    private Map<String,String> types2 = new HashMap<String, String>();
+
     /**
      * A megjelenítendő típusok listája
      */
-    private String[] names;
+    private String[] names, names2;
 
     /**
      * lista
      */
-    private ListView listView;
+    private ListView listView1, listView2;
+    private ListView lv1, lv2;
 
     /**
      * fejléc kirajzolása
@@ -65,8 +74,16 @@ public class HobbiesActivity extends Activity {
         showActionBar();
         Intent intent = getIntent();
 
+/*
+        listView1 = (ListView)findViewById(R.id.hobbyList);
+        listView2 = (ListView)findViewById(R.id.ineList);*/
 
-       listView = (ListView)findViewById(R.id.hobbyList);
+        lv1 = new ListView(this);
+        lv2 = new ListView(this);
+
+       Vector<View> pages =new Vector<View>();
+        pages.add(lv1);
+        pages.add(lv2);
 
         names = new String[]{"Reptér", "Vidámpark", "Akvárium", "Galéria", "Pékség", "Bár", "Szépségszalon", "Kerékpár üzlet", "Könyvesbolt", "Bowling pálya", "Kávézó", "Autó kölcsönző",
             "Kaszinó","Temető","Templom", "Ruha üzlet", "Virágárus", "Étel", "Bútorbolt", "Edzőterem", "Fodrász", "Barkácsbolt", "Egészség", "Hindu templom", "Ékszer üzlet","Könyvtár", "Italbolt",
@@ -81,13 +98,33 @@ public class HobbiesActivity extends Activity {
             types.put(names[i],values[i]);
         }
 
-        ArrayList<String> list = new ArrayList<String>();
-        for (int i = 0; i < names.length; ++i) {
-            list.add(names[i]);
+        names2 = new String[]{"Egyetem", "Park", "Vasútállomás"};
+        String[] values2 = new String[]{"Egyetem", "Park", "Vasútállomás"};
+
+        for(int i=0; i<names2.length;++i){
+            types2.put(names2[i],values2[i]);
         }
+
+        /*
         final ArrayAdapter adapter = new ArrayAdapter(this,
                android.R.layout.simple_list_item_multiple_choice, list);
-        listView.setAdapter(adapter);
+        listView.setAdapter(adapter);*/
+
+        ViewPager vp = (ViewPager) findViewById(R.id.viewpager);
+        CustomPagerAdapter adapter = new CustomPagerAdapter(getApplicationContext(), pages);
+        vp.setAdapter(adapter);
+
+        lv1.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_multiple_choice,names));
+        lv2.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_multiple_choice,names2));
+
+        lv1.setChoiceMode(AbsListView.CHOICE_MODE_MULTIPLE);
+        lv1.setBackgroundResource(R.drawable.list_bgr);
+
+        lv2.setChoiceMode(AbsListView.CHOICE_MODE_MULTIPLE);
+        lv2.setBackgroundResource(R.drawable.list_bgr);
+
+
+
     }
 
     /**
@@ -106,8 +143,8 @@ public class HobbiesActivity extends Activity {
     {
         ArrayList<String> checked = new ArrayList<String>();
         ArrayList<String> checkedNames = new ArrayList<String>();
-        int len =listView.getCount();
-        SparseBooleanArray c=listView.getCheckedItemPositions();
+        int len =lv1.getCount();
+        SparseBooleanArray c=lv1.getCheckedItemPositions();
 
         for (int i = 0; i<len; i++)
         {
@@ -118,9 +155,27 @@ public class HobbiesActivity extends Activity {
 
             }
         }
+
+        ArrayList<String> checked2 = new ArrayList<String>();
+        ArrayList<String> checkedNames2 = new ArrayList<String>();
+        SparseBooleanArray c2=lv2.getCheckedItemPositions();
+
+        for (int i = 0; i<lv2.getCount(); i++)
+        {
+            if (c2.get(i)) {
+                String item = types2.get(names2[i]);
+                checkedNames2.add(names2[i]);
+                checked2.add(item);
+
+            }
+        }
+
+
         Intent resultIntent  = new Intent();
         resultIntent.putStringArrayListExtra("checkedNames", checkedNames);
         resultIntent.putStringArrayListExtra("CheckedItems", checked);
+        resultIntent.putStringArrayListExtra("checkedNames2", checkedNames2);
+        resultIntent.putStringArrayListExtra("CheckedItems2", checked2);
         setResult(Activity.RESULT_OK, resultIntent);
         finish();
     }

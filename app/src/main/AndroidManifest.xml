@@ -26,23 +26,34 @@
     <application
         android:allowBackup="true"
         android:icon="@drawable/icon"
-        android:label="@string/app_name"
-       >
+        android:label="@string/app_name" >
+
         <activity
-            android:name="hobby.app.MainActivity"
-            android:label="@string/app_name"
-            android:windowSoftInputMode="adjustPan"
+            android:name="hobby.app.LoginActivity"
+            android:label="@string/title_activity_login"
+            android:windowSoftInputMode="adjustResize|stateHidden"
             android:theme="@style/AppThemeNoBar">
+
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity
+            android:name="hobby.app.MainActivity"
+            android:label="@string/app_name"
+            android:theme="@style/AppThemeNoBar"
+            android:windowSoftInputMode="adjustPan" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="hobby.app.LoginActivity" />
+        </activity>
         <activity
             android:name="hobby.app.HobbiesActivity"
             android:label="@string/app_name"
-            android:theme="@style/AppTheme">
+            android:theme="@style/AppTheme" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="hobby.app.MainActivity" />
@@ -50,25 +61,24 @@
         <activity
             android:name="hobby.app.ResultlistActivity"
             android:label="@string/app_name"
-            android:theme="@style/AppTheme">
+            android:theme="@style/AppTheme" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="hobby.app.MainActivity"/>
+                android:value="hobby.app.MainActivity" />
         </activity>
         <activity
             android:name="hobby.app.MapActivity"
+            android:configChanges="orientation|screenSize"
             android:label="@string/app_name"
-            android:theme="@style/AppTheme"
-            android:configChanges="orientation|screenSize">
+            android:theme="@style/AppTheme" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="hobby.app.ResultlistActivity" />
         </activity>
-
         <activity
             android:name="hobby.app.DirectionsActivity"
             android:label="@string/app_name"
-            android:theme="@style/AppTheme">
+            android:theme="@style/AppTheme" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="hobby.app.MapActivity" />
@@ -76,10 +86,14 @@
 
         <meta-data
             android:name="com.google.android.maps.v2.API_KEY"
-            android:value="AIzaSyDp3PkBXQqU8nGCuJauwvqwDl0ntL70X8U"/>
+            android:value="AIzaSyDp3PkBXQqU8nGCuJauwvqwDl0ntL70X8U" />
         <meta-data
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />
+
+
     </application>
+
+
 
 </manifest>
